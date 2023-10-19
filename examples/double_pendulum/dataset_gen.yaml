@@ -1,6 +1,9 @@
 # An example of config file for training/testing data generation
 # This example contains the full set of allowed parameters --> Some of them can be ignored
 
+# Noise (default is 0.1)
+noise: 0.25
+
 # The time step in the environment
 time_step: 0.01
 

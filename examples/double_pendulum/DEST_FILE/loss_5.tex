@@ -1,0 +1,179 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{darkred}{RGB}{139,0,0}
+\definecolor{lightgray204}{RGB}{204,204,204}
+
+\begin{groupplot}[group style={group size=2 by 2}]
+\nextgroupplot[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=lightgray204},
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={\(\displaystyle \mathrm{Time \ steps}\)},
+xmajorgrids,
+xmin=-70, xmax=1470,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \mathrm{Total \ loss}\) (\(\displaystyle N_{\mathrm{train}}=5\))},
+ymajorgrids,
+ymin=-3.4433687251294e-05, ymax=0.00288453130589915,
+ytick style={color=black}
+]
+\path [fill=red, fill opacity=0.2, semithick]
+(axis cs:0,0.00275185107893776)
+--(axis cs:0,0.00257800630497513)
+--(axis cs:100,0.00124528343294514)
+--(axis cs:200,0.000133978640951682)
+--(axis cs:300,0.000101026764605194)
+--(axis cs:400,9.82465397100896e-05)
+--(axis cs:500,9.97798561002128e-05)
+--(axis cs:600,9.92660119663924e-05)
+--(axis cs:700,0.000102608144516125)
+--(axis cs:800,0.000108101156365592)
+--(axis cs:900,0.000110103891347535)
+--(axis cs:1000,0.000113650792627595)
+--(axis cs:1100,0.000117677023808938)
+--(axis cs:1200,0.000115506803558674)
+--(axis cs:1300,0.000112043421540875)
+--(axis cs:1400,0.000113250115828123)
+--(axis cs:1400,0.000116354774218053)
+--(axis cs:1400,0.000116354774218053)
+--(axis cs:1300,0.0001144835841842)
+--(axis cs:1200,0.000118207071500365)
+--(axis cs:1100,0.000119105525664054)
+--(axis cs:1000,0.00011587535700528)
+--(axis cs:900,0.000111027942330111)
+--(axis cs:800,0.00010892689897446)
+--(axis cs:700,0.00010582433314994)
+--(axis cs:600,9.98811650788412e-05)
+--(axis cs:500,0.000101012141385581)
+--(axis cs:400,0.000106726273952518)
+--(axis cs:300,0.000114913255674764)
+--(axis cs:200,0.000272503886662889)
+--(axis cs:100,0.00142006052628858)
+--(axis cs:0,0.00275185107893776)
+--cycle;
+
+\addplot [semithick, darkred, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00266492366790771
+100 0.00133264064788818
+200 0.000203251838684082
+300 0.000108003616333008
+400 0.000102519989013672
+500 0.000100374221801758
+600 9.95397567749023e-05
+800 0.000108480453491211
+900 0.000110507011413574
+1000 0.000114798545837402
+1100 0.000118374824523926
+1200 0.000116825103759766
+1300 0.000113248825073242
+1400 0.000114798545837402
+};
+\addlegendentry{Si 2}
+
+\nextgroupplot[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=lightgray204},
+log basis y={10},
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={\(\displaystyle \mathrm{Time \ steps}\)},
+xmajorgrids,
+xmin=-70, xmax=1470,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \mathrm{Mean \ squared \ loss}\) (\(\displaystyle N_{\mathrm{train}}=5\))},
+ymajorgrids,
+ymin=8.31673131211601e-05, ymax=0.00325080005372152,
+ymode=log,
+ytick style={color=black}
+]
+\path [fill=red, fill opacity=0.4, semithick]
+(axis cs:0,0.00275185098871589)
+--(axis cs:0,0.00257800659164786)
+--(axis cs:100,0.0012452834052965)
+--(axis cs:200,0.000133978755911812)
+--(axis cs:300,0.000101026889751665)
+--(axis cs:400,9.82467099674977e-05)
+--(axis cs:500,9.97800379991531e-05)
+--(axis cs:600,9.92663190118037e-05)
+--(axis cs:700,0.000102608275483362)
+--(axis cs:800,0.000108101405203342)
+--(axis cs:900,0.000110104119812604)
+--(axis cs:1000,0.000113650967250578)
+--(axis cs:1100,0.000117677074740641)
+--(axis cs:1200,0.000115506722067948)
+--(axis cs:1300,0.000112043322587851)
+--(axis cs:1400,0.000113249945570715)
+--(axis cs:1400,0.000116354785859585)
+--(axis cs:1400,0.000116354785859585)
+--(axis cs:1300,0.000114483758807182)
+--(axis cs:1200,0.000118207186460495)
+--(axis cs:1100,0.000119105541671161)
+--(axis cs:1000,0.000115875343908556)
+--(axis cs:900,0.000111027991806623)
+--(axis cs:800,0.00010892692807829)
+--(axis cs:700,0.000105824685306288)
+--(axis cs:600,9.98813629848883e-05)
+--(axis cs:500,0.000101012366940267)
+--(axis cs:400,0.000106726402009372)
+--(axis cs:300,0.000114913287688978)
+--(axis cs:200,0.000272503879386932)
+--(axis cs:100,0.00142006052192301)
+--(axis cs:0,0.00275185098871589)
+--cycle;
+
+\addplot [semithick, darkred, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00266492902301252
+100 0.00133267173077911
+200 0.000203241317649372
+300 0.000107970095996279
+400 0.000102486541436519
+500 0.000100396209745668
+600 9.95738082565367e-05
+700 0.000104216494946741
+800 0.000108514170278795
+900 0.000110566048533656
+1000 0.000114763170131482
+1100 0.000118391333671752
+1200 0.000116856965178158
+1300 0.000113263515231665
+1400 0.00011480236571515
+};
+\addlegendentry{Si 2}
+
+\nextgroupplot[
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=-70, xmax=1470,
+xtick style={color=black},
+y grid style={darkgray176},
+ymin=0, ymax=1,
+ytick style={color=black}
+]
+
+\nextgroupplot[
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=-70, xmax=1470,
+xtick style={color=black},
+y grid style={darkgray176},
+ymin=0, ymax=1,
+ytick style={color=black}
+]
+\end{groupplot}
+
+\end{tikzpicture}

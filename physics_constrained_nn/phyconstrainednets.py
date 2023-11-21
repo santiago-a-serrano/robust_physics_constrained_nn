@@ -177,7 +177,7 @@ class PhyConstrainedNets(hk.Module):
 
 		raise ('Not implemented')
 
-
+# TODO: Find in this function what I have to edit to add noise to the constraints. Maybe add the noise as a parameter? constraints_dynamics is the parameter.
 def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, ncontrol, nn_params, ODESolver, 
 								known_dynamics=None, constraints_dynamics=None, pen_l2=1e-4, pen_constr={}, 
 								batch_size=1, extra_args_init=None, train_with_constraints = False, normalize=True):

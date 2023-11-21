@@ -1,6 +1,12 @@
 # An example of config file for the parameters used to train a single 
 # neural network to predict the next state based on the current state and input signal 
 
+# Gaussian weights noise, defaults to 0.1 if no value:
+weight_noise: 0.1 
+
+# Biases noise, defaults to 0.1 if no value:
+bias_noise: 0
+
 # The file that contains the training and testing dataset
 train_data_file: ./data/datatrain_dt0p01.pkl
 

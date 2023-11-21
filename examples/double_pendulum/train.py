@@ -142,7 +142,7 @@ def build_learner(paramsNN, baseline='rk4'):
                                                                                                                  paramsNN.n_state, paramsNN.n_control,
                                                                                                                  nn_params, apriori_net, known_dynamics=jax.vmap(
                                                                                                                      pendulum_known_terms),
-                                                                                                                 constraints_dynamics=custom_constraints, pen_l2=paramsNN.pen_l2,
+                                                                                                                 constraints_dynamics=custom_constraints, pen_l2=paramsNN.pen_l2, # TODO: Is this what I have to add noise to?
                                                                                                                  pen_constr=paramsNN.pen_constr, batch_size=paramsNN.batch_size, train_with_constraints=train_with_constraints)
     else:
         raise ("Not implemented yet !")
@@ -177,6 +177,8 @@ def load_config_file(path_config_file, extra_args={}):
     out_file = m_config['output_file']
 
     type_baseline = m_config.get('baseline', 'rk4')
+    weight_noise = m_config.get('weight_noise', 0.1)
+    bias_noise = m_config.get('bias_noise', 0.1)
 
     opt_info = m_config['optimizer']
 
@@ -205,12 +207,12 @@ def load_config_file(path_config_file, extra_args={}):
                                     freq_accuracy=freq_accuracy, freq_save=int(freq_save), patience=patience)
                       for seed_val in seed_list]
 
-    return mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
+    return weight_noise, bias_noise, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
 
 
 def main_fn(path_config_file, extra_args={}):
     # Read the configration file
-    mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
+    weight_noise, bias_noise, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
         path_config_file, extra_args)
     reducedSampleLog = SampleLog(xTrain=None, xTrainExtra=None, uTrain=None, xnextTrain=None,
                                  lowU_train=mSampleLog.lowU_train, highU_train=mSampleLog.highU_train,
@@ -259,6 +261,7 @@ def main_fn(path_config_file, extra_args={}):
             tqdm.write(dbg_msg)
 
             # Build the neural network, the update, loss function and paramters of the neural network structure
+            # TODO: Here I must edit something related with the Lagrange
             rng_gen, opt, (params, m_pen_eq_k, m_pen_ineq_k, m_lagr_eq_k, m_lagr_ineq_k), pred_xnext,\
                 loss_fun, update, update_lagrange, loss_fun_constr, train_with_constraints = build_learner(
                     mParamsNN, type_baseline)
@@ -446,7 +449,18 @@ def main_fn(path_config_file, extra_args={}):
             # Once the algorithm has converged, collect and save the data and params
             dict_loss_per_seed[mParamsNN.seed_init] = dict_loss
             final_log_dict[i] = dict_loss_per_seed
-            dict_params_per_seed[mParamsNN.seed_init] = best_params
+            # Here we update the weights with the noise
+            key = jax.random.PRNGKey(0)
+            # print(best_params) # TODO: Remove this
+            best_params_noisy = {}
+            for it_key, it_value in best_params.items():
+                best_params_noisy[it_key] = {}
+                for w_or_b, w_or_b_value in it_value.items():
+                    if w_or_b == 'w':
+                        best_params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=weight_noise)
+                    elif w_or_b == 'b':
+                        best_params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=bias_noise)
+            dict_params_per_seed[mParamsNN.seed_init] = best_params_noisy
             final_params_dict[i] = dict_params_per_seed
 
             # Cretae the log

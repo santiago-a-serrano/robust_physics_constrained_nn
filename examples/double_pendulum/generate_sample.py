@@ -59,7 +59,7 @@ def pendulum_analytical(state: jnp.ndarray, u: jnp.ndarray = None, t: jnp.float3
 # # Build the batch version of this function
 # batch_dfun = jax.jit(jax.vmap(f_analytical))
 
-
+# this function gets actually called during training, not during data generation
 def custom_constraints(state, u=None, f1=None, f2=None):
     """ Build the constraints on the unknown terms of the dynamics
             THIS FUNCTION TAKES BATCHES AS INPUTS AND RETURNS A COUPLE OF EQUALITY AND INEQUALITY CONSTRAINTS
@@ -176,7 +176,6 @@ def gen_samples(rng_key, time_step, num_traj, trajectory_length, n_rollout, x0_i
         for j, r in enumerate(res_shift):
             r.extend(xnextVal[(j+1):(j+1+trajectory_length), :])
     return rng_key, jnp.array(res_currx), jnp.array(res_shift)
-
 
 def load_config_yaml(path_config_file, extra_args={}):
     """ Load the yaml configuration file giving the training/testing information

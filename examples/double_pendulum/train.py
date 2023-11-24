@@ -11,7 +11,7 @@ from generate_sample import pendulum_known_terms, custom_constraints
 from physics_constrained_nn.phyconstrainednets import build_learner_with_sideinfo
 from physics_constrained_nn.utils import SampleLog, HyperParamsNN, LearningLog
 from physics_constrained_nn.utils import _INITIALIZER_MAPPING, _ACTIVATION_FN, _OPTIMIZER_FN
-from noise_generator import add_gaussian_noise
+from physics_constrained_nn.noise_generator import add_gaussian_noise
 
 import optax
 
@@ -57,7 +57,7 @@ def build_params(m_params, output_size=None, input_index=None):
     return nn_params
 
 
-def build_learner(paramsNN, baseline='rk4'):
+def build_learner(paramsNN, baseline='rk4', constraint_noise=0):
     """ Given a structure like HyperParamsNN, this function generates the functions to compute the loss,
             to update the weight and to predict the next state
             :param paramsNN : HyperParamsNN structure proving the parameters to build the NN
@@ -114,22 +114,28 @@ def build_learner(paramsNN, baseline='rk4'):
     # This is specific to the type of environemnt
     # Build the nn depending on the type of side information
     if type_sideinfo == 0:
-
+        
         # Specify if we train usin constraints
-        train_with_constraints = False
+        train_with_constraints = True # TODO: Originally it was set to false, I changed it.
         assert len(dict_params) == 1, 'There should be only one remaining key'
 
+        # TODO: This was the original code
+        # # Build the neural network parameter
+        # nn_params = {'vector_field': build_params(dict_params['vector_field'],
+        #                                           input_index=jnp.array(
+        #                                               [i for i in range(paramsNN.n_state+paramsNN.n_control)]),
+        #                                           output_size=paramsNN.n_state)}
+        
         # Build the neural network parameter
-        nn_params = {'vector_field': build_params(dict_params['vector_field'],
-                                                  input_index=jnp.array(
-                                                      [i for i in range(paramsNN.n_state+paramsNN.n_control)]),
-                                                  output_size=paramsNN.n_state)}
+        nn_params = {'f1': build_params(dict_params['vector_field'], input_index=jnp.array([0, 1, 3]), output_size=1),
+                     'f2': build_params(dict_params['vector_field'], input_index=jnp.array([0, 1, 2]), output_size=1)}
 
         # Build the learner main functions
+        # TODO: constraints_dynamics parameter of build_learner_with_sideinfo for some reason was set to None here. I changed that.
         params, pred_xnext, (loss_fun, loss_fun_constr), (update, update_lagrange) = \
             build_learner_with_sideinfo(rng_gen, opt, paramsNN.model_name, paramsNN.actual_dt,
                                         paramsNN.n_state, paramsNN.n_control,  nn_params, apriori_net, known_dynamics=None,
-                                        constraints_dynamics=None, pen_l2=paramsNN.pen_l2, pen_constr=paramsNN.pen_constr,
+                                        constraints_dynamics=custom_constraints, pen_l2=paramsNN.pen_l2, pen_constr=paramsNN.pen_constr,
                                         batch_size=paramsNN.batch_size, train_with_constraints=train_with_constraints)
 
     ################################################################
@@ -142,8 +148,9 @@ def build_learner(paramsNN, baseline='rk4'):
                                                                                                                  paramsNN.n_state, paramsNN.n_control,
                                                                                                                  nn_params, apriori_net, known_dynamics=jax.vmap(
                                                                                                                      pendulum_known_terms),
-                                                                                                                 constraints_dynamics=custom_constraints, pen_l2=paramsNN.pen_l2, # TODO: Is this what I have to add noise to?
-                                                                                                                 pen_constr=paramsNN.pen_constr, batch_size=paramsNN.batch_size, train_with_constraints=train_with_constraints)
+                                                                                                                 constraints_dynamics=custom_constraints, pen_l2=paramsNN.pen_l2,
+                                                                                                                 pen_constr=paramsNN.pen_constr, batch_size=paramsNN.batch_size, train_with_constraints=train_with_constraints,
+                                                                                                                 constraint_noise=constraint_noise)
     else:
         raise ("Not implemented yet !")
 
@@ -179,6 +186,7 @@ def load_config_file(path_config_file, extra_args={}):
     type_baseline = m_config.get('baseline', 'rk4')
     weight_noise = m_config.get('weight_noise', 0.1)
     bias_noise = m_config.get('bias_noise', 0.1)
+    constraint_noise = m_config.get('constraint_noise', 0.1)
 
     opt_info = m_config['optimizer']
 
@@ -207,12 +215,12 @@ def load_config_file(path_config_file, extra_args={}):
                                     freq_accuracy=freq_accuracy, freq_save=int(freq_save), patience=patience)
                       for seed_val in seed_list]
 
-    return weight_noise, bias_noise, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
+    return weight_noise, bias_noise, constraint_noise, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
 
 
 def main_fn(path_config_file, extra_args={}):
     # Read the configration file
-    weight_noise, bias_noise, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
+    weight_noise, bias_noise, constraint_noise, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
         path_config_file, extra_args)
     reducedSampleLog = SampleLog(xTrain=None, xTrainExtra=None, uTrain=None, xnextTrain=None,
                                  lowU_train=mSampleLog.lowU_train, highU_train=mSampleLog.highU_train,
@@ -264,7 +272,7 @@ def main_fn(path_config_file, extra_args={}):
             # TODO: Here I must edit something related with the Lagrange
             rng_gen, opt, (params, m_pen_eq_k, m_pen_ineq_k, m_lagr_eq_k, m_lagr_ineq_k), pred_xnext,\
                 loss_fun, update, update_lagrange, loss_fun_constr, train_with_constraints = build_learner(
-                    mParamsNN, type_baseline)
+                    mParamsNN, type_baseline, constraint_noise=constraint_noise)
 
             # Initialize the optimizer with the initial parameters
             opt_state = opt.init(params)

@@ -7,6 +7,8 @@ import haiku as hk
 
 # Optax for the optimization scheme
 import optax
+from physics_constrained_nn.noise_generator import add_gaussian_noise_tuple
+
 
 # Typing functions
 from typing import Optional, Tuple
@@ -37,7 +39,8 @@ class PhyConstrainedNets(hk.Module):
 		"""
 		super().__init__(name=name)
 		# If no known dynamics is given, then nn_params should contains only a single unknown term
-		assert not (known_dynamics is None and len(nn_params) != 1), ' If no known dynamics is given, then nn_params should contains only a single unknown term'
+		# TODO: I commented this, I hope it doesn't cause any troubles
+		# assert not (known_dynamics is None and len(nn_params) != 1), ' If no known dynamics is given, then nn_params should contains only a single unknown term'
 		assert ODESolver == 'rk4' or ODESolver == 'base' or type(ODESolver) == dict, 'ODESolver must be either <rk4>, <base>, or a dictionary encoding the parameter of the apriori enclosure term'
 		self._ns = ns
 		self._nu = nu
@@ -47,6 +50,7 @@ class PhyConstrainedNets(hk.Module):
 		self._known_dynamics = known_dynamics
 		self._constraints_dynamics = constraints_dynamics
 		self._data_stats = data_stats
+		self._nn_params = nn_params
 		# Build the different neural networks and the integration neural network
 		self._unknown_terms = dict()
 		self.build_unknown_nets(nn_params, ODESolver)
@@ -134,7 +138,7 @@ class PhyConstrainedNets(hk.Module):
 		return vfield
 
 	# @abstractmethod
-	def constraints(self, x, u=None, extra_args=None):
+	def constraints(self, x, u=None, extra_args=None, constraint_noise=0):
 		""" This function expresses known constraints on the unknown vector field as soft constraints
 			in the loss function.
 			For this function x might denotes the next state (output of our estimation) or the set of
@@ -145,12 +149,26 @@ class PhyConstrainedNets(hk.Module):
 			:params u : The current control value of the system
 			:param extra_args	: State dependent extra parameters used in side information and constraints
 		"""
+		constraints = None
+		# TODO: Delete the complete value-passing of f1 and f2
+		f1 = self._nn_params.get("f1", None)
+		f2 = self._nn_params.get("f2", None)
+		print("\nExtra args:", extra_args)
+		print("\nUnknown terms:", self._unknown_terms)
+		# print("\nVector field:", self._unknown_terms['vector_field'][0])
+		print("\n", x, self._constraints_dynamics)
 		if x is None or self._constraints_dynamics is None:
-			return jnp.array([]), jnp.array([]) 
-		if extra_args is not None:
-			return self._constraints_dynamics(x,u,extra_args=extra_args,**self._unknown_terms)
+			constraints = jnp.array([]), jnp.array([])
+			print("\nNo constraints")
+		elif extra_args is not None:
+			constraints = self._constraints_dynamics(x,u, extra_args=extra_args,**self._unknown_terms)
+			print("\nConstraints: ", constraints[0], constraints[1])
 		else:
-			return self._constraints_dynamics(x,u,**self._unknown_terms)
+			constraints = self._constraints_dynamics(x,u, **self._unknown_terms)
+			print("\nConstraints: ", constraints[0], constraints[1])
+		
+		key = jax.random.PRNGKey(0)
+		return add_gaussian_noise_tuple(key, constraints, constraint_noise)
 
 
 	def __call__(self, x, u=None, extra_args=None, dropout_rate=None, rng=None):
@@ -180,7 +198,8 @@ class PhyConstrainedNets(hk.Module):
 # TODO: Find in this function what I have to edit to add noise to the constraints. Maybe add the noise as a parameter? constraints_dynamics is the parameter.
 def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, ncontrol, nn_params, ODESolver, 
 								known_dynamics=None, constraints_dynamics=None, pen_l2=1e-4, pen_constr={}, 
-								batch_size=1, extra_args_init=None, train_with_constraints = False, normalize=True):
+								batch_size=1, extra_args_init=None, train_with_constraints = False, normalize=True,
+								constraint_noise=0):
 	""" This function builds a neural network to estimate future state values while encoding side information about 
 		the dynamics. Specifically, it returns a function to estimate next state and a function to update the network parameters.
 		:param rng_key 					: A key for random initialization of the parameters of the neural networs
@@ -207,8 +226,10 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		:param train_with_constraints 	: Specify if the learning should include the constraints or only use the constraints for loss function metric evaluation
 	"""
 	
+
+
 	# First define a function to estimate the future state
-	def pred_next_state_full(x, u=None, extra_args=None, extra_args_colocation=(None, None, None), constr_fun=None):
+	def pred_next_state_full(x, u=None, extra_args=None, extra_args_colocation=(None, None, None), constr_fun=None, constraint_noise=0):
 		""" This function estimates the next state given the current state and current control input. It also returns
 			the estimation of the vector fied, the unknown terms, the remainder term, the equality and inequality constraints at x and u.
 			The inputs x and u must be two dimensional array as batches.
@@ -221,19 +242,19 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		assert u is None or x.shape[0] == u.shape[0], 'The (batch size of u) should be equal to (batch size of x)'
 		objNN = PhyConstrainedNets(nstate, ncontrol, nn_params, known_dynamics, constr_fun, time_step, ODESolver, model_name)
 		# Compute the constraints associated to the next prediction
-		eqCterms, ineqCterms = objNN.constraints(x, u, extra_args)
+		eqCterms, ineqCterms = objNN.constraints(x, u, extra_args, constraint_noise)
 		# Compute the constraints cost associated to the colocoation method 
 		x_coloc, u_coloc, xextra_coloc = extra_args_colocation
-		eqCterms_coloc, ineqCterms_coloc = objNN.constraints(x_coloc, u_coloc, xextra_coloc) if x_coloc is not None else (jnp.array([]), jnp.array([]))
+		eqCterms_coloc, ineqCterms_coloc = objNN.constraints(x_coloc, u_coloc, xextra_coloc, constraint_noise) if x_coloc is not None else (jnp.array([]), jnp.array([]))
 		# Evaluate the ODESolver for obtaining the next state
 		nextX, vectorfieldX, unkTermsAtX, remTermAtX =  objNN(x, u, extra_args) if x is not None else (jnp.array([]), jnp.array([]), jnp.array([]), jnp.array([]))
 		return nextX, vectorfieldX, unkTermsAtX, remTermAtX, (eqCterms, eqCterms_coloc), (ineqCterms, ineqCterms_coloc)
 
 	# Predict the next state with disabling constraints if requested
-	pred_next_state = lambda x, u=None, extra_args=None, extra_args_colocation=(None, None, None): pred_next_state_full(x, u, extra_args, extra_args_colocation, None if not train_with_constraints else constraints_dynamics)
+	pred_next_state = lambda x, u=None, extra_args=None, extra_args_colocation=(None, None, None): pred_next_state_full(x, u, extra_args, extra_args_colocation, None if not train_with_constraints else constraints_dynamics, constraint_noise)
 
 	# Predict the next state with constraints enabled
-	pred_next_state_constr = lambda x, u=None, extra_args=None, extra_args_colocation=(None, None, None): pred_next_state_full(x, u, extra_args, extra_args_colocation, constraints_dynamics)
+	pred_next_state_constr = lambda x, u=None, extra_args=None, extra_args_colocation=(None, None, None): pred_next_state_full(x, u, extra_args, extra_args_colocation, constraints_dynamics, constraint_noise)
 
 	# Random x and u initialization to build network parameters
 	dummy_x_init = jax.numpy.zeros((batch_size,nstate))

@@ -2,10 +2,13 @@
 # neural network to predict the next state based on the current state and input signal 
 
 # Gaussian weights noise, defaults to 0.1 if no value:
-weight_noise: 0.1 
+weight_noise: 0.0
 
-# Biases noise, defaults to 0.1 if no value:
-bias_noise: 0
+# Gaussian biases noise, defaults to 0.1 if no value:
+bias_noise: 0.0
+
+# Gaussian constraints noise, defaults to 0.1 if no value:
+constraint_noise: 0.1
 
 # The file that contains the training and testing dataset
 train_data_file: ./data/datatrain_dt0p01.pkl

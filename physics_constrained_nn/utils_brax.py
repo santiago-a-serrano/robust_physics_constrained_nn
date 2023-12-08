@@ -120,7 +120,7 @@ def state2qp_aux(state_aux, bool_indx):
 		:param bool_indx : A boolean vector with the number of True = shape(state_aux)
 	"""
 	mRes = jnp.zeros(shape=(bool_indx.shape[0],))
-	return jax.ops.index_update(mRes, bool_indx, state_aux)
+	return mRes.at[bool_indx].set(state_aux)
 
 def fast_qp2state(m_qp : QP, pos_indx : jnp.ndarray, quat_indx : jnp.ndarray, ang_indx : jnp.ndarray):
 	"""This function provides a translation from a QP (not batched) active state representation to a 1D arary.
@@ -144,8 +144,8 @@ def qp2state(m_qp : QP, qp_indx : jnp.ndarray):
 
 def state2qp_merge(state : jnp.ndarray, arg_extra_state : jnp.ndarray, qp_indx : jnp.ndarray, qp_indx_neg : jnp.ndarray, qp_base : QP):
 	state_n = jnp.zeros(qp_indx.shape)
-	state_n = jax.ops.index_update(state_n, qp_indx, state)
-	state_n = jax.ops.index_update(state_n, qp_indx_neg, arg_extra_state)
+	state_n = state_n.at[qp_indx].set(state)
+	state_n = state_n.at[qp_indx_neg].set(arg_extra_state)
 	return QP(pos=state_n[:qp_base.pos.size].reshape(qp_base.pos.shape), 
 			  rot=state_n[qp_base.pos.size:(qp_base.pos.size+qp_base.rot.size)].reshape(qp_base.rot.shape), 
 			  vel=state_n[(qp_base.pos.size+qp_base.rot.size):(qp_base.pos.size+qp_base.rot.size+qp_base.vel.size)].reshape(qp_base.vel.shape), 
@@ -161,10 +161,10 @@ def fast_state2qp(x_pos: jnp.ndarray, x_rot : jnp.ndarray, x_vel: jnp.ndarray, x
 		:param qp_base : The base QP object with value for inactive state
 		:param qp_indx : A 1D boolean array specifying the active or inactive states
 	"""
-	mPos = jax.ops.index_update(qp_base.pos.ravel(), pos_indx, x_pos).reshape(qp_base.pos.shape)
-	mVel = jax.ops.index_update(qp_base.vel.ravel(), pos_indx, x_vel).reshape(qp_base.vel.shape)
-	mQuat = jax.ops.index_update(qp_base.rot.ravel(), quat_indx, x_rot).reshape(qp_base.rot.shape)
-	mAng = jax.ops.index_update(qp_base.ang.ravel(), ang_indx, x_ang).reshape(qp_base.ang.shape)
+	mPos = qp_base.pos.ravel().at[pos_indx].set(x_pos).reshape(qp_base.pos.shape)
+	mVel = qp_base.vel.ravel().at[pos_indx].set(x_vel).reshape(qp_base.vel.shape)
+	mQuat = qp_base.rot.ravel().at[quat_indx].set(x_rot).reshape(qp_base.rot.shape)
+	mAng = qp_base.ang.ravel().at[ang_indx].set(x_ang).reshape(qp_base.ang.shape)
 	return QP(pos=mPos, rot=mQuat, vel=mVel, ang=mAng)
 
 
@@ -177,7 +177,7 @@ def state2qp(state : jnp.ndarray,  qp_base : QP, qp_indx : jnp.ndarray):
 		:param qp_indx : A 1D boolean array specifying the active or inactive states
 	"""
 	state_n = jnp.concatenate((qp_base.pos.ravel(), qp_base.rot.ravel(), qp_base.vel.ravel(), qp_base.ang.ravel()))
-	state_n = jax.ops.index_update(state_n, qp_indx, state)
+	state_n = state_n.at[qp_indx].set(state)
 	return QP(pos=state_n[:qp_base.pos.size].reshape(qp_base.pos.shape), 
 			  rot=state_n[qp_base.pos.size:(qp_base.pos.size+qp_base.rot.size)].reshape(qp_base.rot.shape), 
 			  vel=state_n[(qp_base.pos.size+qp_base.rot.size):(qp_base.pos.size+qp_base.rot.size+qp_base.vel.size)].reshape(qp_base.vel.shape), 

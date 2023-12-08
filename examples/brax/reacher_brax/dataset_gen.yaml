@@ -56,4 +56,4 @@ utest_lb: -0.6
 utest_ub: 0.6
 
 # Save a video showing the trajectory for the testing and training
-save_video: false
+save_video: true

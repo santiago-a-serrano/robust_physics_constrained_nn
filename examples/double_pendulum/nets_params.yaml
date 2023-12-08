@@ -8,7 +8,18 @@ weight_noise: 0.0
 bias_noise: 0.0
 
 # Gaussian constraints noise, defaults to 0.1 if no value:
-constraint_noise: 0.1
+constraint_noise: 0
+
+# Choose if perform Gaussian Process denoising before training on data
+perform_gp_denoising: False
+
+# If perform_gp_denoising is True, otherwise ignore:
+# Use Log Marginal Likelihood to find the best hyperparameters for the GP denoising
+optimize_hyperparams: False 
+# Don't square the noise in the calculations, so it doesn't end up even smaller
+big_denoising: True
+# The sigma_n (noise) that will be used for denoising if the hyperparameters are not optimized (optimize_hyperparams: False)
+default_sigma_n: 0.01
 
 # The file that contains the training and testing dataset
 train_data_file: ./data/datatrain_dt0p01.pkl

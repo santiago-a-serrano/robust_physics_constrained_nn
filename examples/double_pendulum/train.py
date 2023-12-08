@@ -12,6 +12,7 @@ from physics_constrained_nn.phyconstrainednets import build_learner_with_sideinf
 from physics_constrained_nn.utils import SampleLog, HyperParamsNN, LearningLog
 from physics_constrained_nn.utils import _INITIALIZER_MAPPING, _ACTIVATION_FN, _OPTIMIZER_FN
 from physics_constrained_nn.noise_generator import add_gaussian_noise
+import physics_constrained_nn.gaussian_process_regressor as gpr
 
 import optax
 
@@ -114,28 +115,22 @@ def build_learner(paramsNN, baseline='rk4', constraint_noise=0):
     # This is specific to the type of environemnt
     # Build the nn depending on the type of side information
     if type_sideinfo == 0:
-        
+
         # Specify if we train usin constraints
-        train_with_constraints = True # TODO: Originally it was set to false, I changed it.
+        train_with_constraints = False
         assert len(dict_params) == 1, 'There should be only one remaining key'
 
-        # TODO: This was the original code
-        # # Build the neural network parameter
-        # nn_params = {'vector_field': build_params(dict_params['vector_field'],
-        #                                           input_index=jnp.array(
-        #                                               [i for i in range(paramsNN.n_state+paramsNN.n_control)]),
-        #                                           output_size=paramsNN.n_state)}
-        
         # Build the neural network parameter
-        nn_params = {'f1': build_params(dict_params['vector_field'], input_index=jnp.array([0, 1, 3]), output_size=1),
-                     'f2': build_params(dict_params['vector_field'], input_index=jnp.array([0, 1, 2]), output_size=1)}
+        nn_params = {'vector_field': build_params(dict_params['vector_field'],
+                                                  input_index=jnp.array(
+                                                      [i for i in range(paramsNN.n_state+paramsNN.n_control)]),
+                                                  output_size=paramsNN.n_state)}
 
         # Build the learner main functions
-        # TODO: constraints_dynamics parameter of build_learner_with_sideinfo for some reason was set to None here. I changed that.
         params, pred_xnext, (loss_fun, loss_fun_constr), (update, update_lagrange) = \
             build_learner_with_sideinfo(rng_gen, opt, paramsNN.model_name, paramsNN.actual_dt,
                                         paramsNN.n_state, paramsNN.n_control,  nn_params, apriori_net, known_dynamics=None,
-                                        constraints_dynamics=custom_constraints, pen_l2=paramsNN.pen_l2, pen_constr=paramsNN.pen_constr,
+                                        constraints_dynamics=None, pen_l2=paramsNN.pen_l2, pen_constr=paramsNN.pen_constr,
                                         batch_size=paramsNN.batch_size, train_with_constraints=train_with_constraints)
 
     ################################################################
@@ -187,6 +182,10 @@ def load_config_file(path_config_file, extra_args={}):
     weight_noise = m_config.get('weight_noise', 0.1)
     bias_noise = m_config.get('bias_noise', 0.1)
     constraint_noise = m_config.get('constraint_noise', 0.1)
+    perform_gp_denoising = m_config.get('perform_gp_denoising', False)
+    optimize_hyperparams = m_config.get('optimize_hyperparams', True)
+    big_denoising = m_config.get('big_denoising', True)
+    default_sigma_n = m_config.get('default_sigma_n', 0.1)
 
     opt_info = m_config['optimizer']
 
@@ -215,12 +214,49 @@ def load_config_file(path_config_file, extra_args={}):
                                     freq_accuracy=freq_accuracy, freq_save=int(freq_save), patience=patience)
                       for seed_val in seed_list]
 
-    return weight_noise, bias_noise, constraint_noise, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
+    return weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
+
+def denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, n_rollout, optimize_hyperparams, big_denoising, default_sigma_n):
+    trajectories = []
+    for i in range(0, len(xTrainList), trajectory_length):
+        trajectories.append(np.array(xTrainList[i:i+trajectory_length]))
+    # not_in_xtrainlist = xnextTrainList[-1][-1][-trajectory_futures:]
+    trajectory_max_idx = trajectory_length
+    for idx in range(0, len(trajectories)):
+        for future in range(0, n_rollout):
+            trajectories[idx] = np.vstack((trajectories[idx], xnextTrainList[future][trajectory_max_idx-1]))
+        trajectory_max_idx += trajectory_length
+    
+    sigma_f = 1
+    sigma_l = 1
+    sigma_n = default_sigma_n
+    if optimize_hyperparams:
+        sigma_f, sigma_l, sigma_n = gpr.find_optim_hyperparams(trajectories[0], big_denoising)
+
+    print("DENOISING TRAJECTORIES...")
+    print("sigma_f", sigma_f)
+    print("sigma_l", sigma_l)
+    print("sigma_n", sigma_n)
+    print("big_denoising", big_denoising)
+    trajectories = [gp_denoise_trajectory(trajectory, sigma_f, sigma_l, sigma_n, big_denoising) for trajectory in trajectories]
+
+    xTrainList = [trajectory[:trajectory_length] for trajectory in trajectories]
+    xTrainList = np.concatenate(xTrainList)
+
+    xnextTrainList = [np.concatenate([trajectory[i:trajectory_length+i] for trajectory in trajectories]) for i in range(1, n_rollout+1)]
+    xnextTrainList = np.array(xnextTrainList)
+
+    return xTrainList, xnextTrainList
+
+
+def gp_denoise_trajectory(trajectory, sigma_f, sigma_l, sigma_n, big_denoising):
+    # noise must be specified if optimize_hyperparam is set to false
+    return gpr.get_denoised_traj(trajectory, sigma_f, sigma_l, sigma_n, big_denoising)
 
 
 def main_fn(path_config_file, extra_args={}):
     # Read the configration file
-    weight_noise, bias_noise, constraint_noise, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
+    weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
         path_config_file, extra_args)
     reducedSampleLog = SampleLog(xTrain=None, xTrainExtra=None, uTrain=None, xnextTrain=None,
                                  lowU_train=mSampleLog.lowU_train, highU_train=mSampleLog.highU_train,
@@ -241,6 +277,11 @@ def main_fn(path_config_file, extra_args={}):
     xnextTrainList = np.asarray(mSampleLog.xnextTrain)
     (_, num_traj_data, trajectory_length) = mSampleLog.disable_substep
     coloc_set = jnp.array(coloc_set)
+    if perform_gp_denoising:
+        xTrainList, xnextTrainList = denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, 5, optimize_hyperparams, big_denoising, default_sigma_n)
+        print("Gaussian Process Denoising enabled")
+    else:
+        print("Gaussian Process Denoising disabled")
 
     # Testing data
     xTest = jnp.asarray(mSampleLog.xTest)
@@ -465,9 +506,9 @@ def main_fn(path_config_file, extra_args={}):
                 best_params_noisy[it_key] = {}
                 for w_or_b, w_or_b_value in it_value.items():
                     if w_or_b == 'w':
-                        best_params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=weight_noise)
+                        best_params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=weight_noise) if weight_noise > 0.00001 else w_or_b_value
                     elif w_or_b == 'b':
-                        best_params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=bias_noise)
+                        best_params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=bias_noise) if weight_noise > 0.00001 else w_or_b_value
             dict_params_per_seed[mParamsNN.seed_init] = best_params_noisy
             final_params_dict[i] = dict_params_per_seed
 

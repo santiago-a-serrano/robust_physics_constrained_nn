@@ -9,6 +9,7 @@ def add_gaussian_noise(key, array, scale=0.1):
     noise = random.normal(key, array.shape) * scale
     return array + noise
 
+@jit
 def add_gaussian_noise_tuple(key, input_tuple, scale=0.1):
     return tuple(map(lambda array: add_gaussian_noise(key, array, scale), input_tuple))
 

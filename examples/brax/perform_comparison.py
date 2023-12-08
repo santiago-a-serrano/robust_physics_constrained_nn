@@ -275,6 +275,8 @@ if __name__ == "__main__":
 	for (log_data, legend, color) in tqdm(zip(m_logs, args.legends, args.colors), total=len(m_logs)):
 		loss_evol_data = {i : val for i, val in log_data.loss_evol.items() if len(val) > 0}
 		for traj_id, n_train, (m_fig, axs) in zip(loss_evol_data, log_data.sampleLog.disable_substep[1], m_figs_loss):
+			if not 'total_loss_train' in loss_evol_data[traj_id]:
+				continue
 			tl_tr, tl_te, ml_tr, ml_te, ctr_tr, ctr_te, coloc_err = generate_loss(loss_evol_data[traj_id], args.window)
 			temp_nnparams = log_data.nn_hyperparams[0]
 			high_freq_record_rg = int(temp_nnparams.freq_accuracy[0]*temp_nnparams.num_gradient_iterations)
@@ -393,27 +395,27 @@ if __name__ == "__main__":
 		list_gm_err_mean, list_gm_err_min, list_gm_err_max  = list(), list(), list()
 		curr_learned_params = {i : val for i, val in log_data.learned_weights.items() if len(val) > 0}
 		for traj_id, n_train, (ax_rel_err,_) in tqdm(zip(curr_learned_params, log_data.sampleLog.disable_substep[1],list_axes_rel_err), total=len(list_axes_rel_err), leave=False):
-			rel_err, gm_rel_err = generate_rel_error(pred_loss_fun, curr_learned_params[traj_id], testTraj, testTraj_extra, uTraj)
-			list_gm_err_mean.append(float(gm_rel_err[0]))
-			list_gm_err_min.append(float(gm_rel_err[1]))
-			list_gm_err_max.append(float(gm_rel_err[2]))
-			training_list.append(n_train)
-			ax_rel_err.plot(time_index, rel_err[0], color=color, linewidth=linewidth, label=legend) # label=r'$N_{\mathrm{traj}} = '+ str(n_train) + '$'
-			ax_rel_err.fill_between(time_index, rel_err[1], rel_err[2], linewidth=linewidth, facecolor=color, alpha=alpha_std)
-			ax_rel_err.set_ylabel(r'$\mathrm{Relative \ error}$ ($N_{\mathrm{train}}='+ str(n_train)+'$)')
-			ax_rel_err.legend(loc='best')
-			tqdm.write('[N_train = {}, Legend = {}]\t : Geometric mean [Mean | Mean-Std | Mean+Std] -> {:.4f} | {:.4f} | {:.4f}'.format(n_train, legend, float(gm_rel_err[0]), float(gm_rel_err[1]), float(gm_rel_err[2])))
+				rel_err, gm_rel_err = generate_rel_error(pred_loss_fun, curr_learned_params[traj_id], testTraj, testTraj_extra, uTraj)
+				list_gm_err_mean.append(float(gm_rel_err[0]))
+				list_gm_err_min.append(float(gm_rel_err[1]))
+				list_gm_err_max.append(float(gm_rel_err[2]))
+				training_list.append(n_train)
+				ax_rel_err.plot(time_index, rel_err[0], color=color, linewidth=linewidth, label=legend) # label=r'$N_{\mathrm{traj}} = '+ str(n_train) + '$'
+				ax_rel_err.fill_between(time_index, rel_err[1], rel_err[2], linewidth=linewidth, facecolor=color, alpha=alpha_std)
+				ax_rel_err.set_ylabel(r'$\mathrm{Relative \ error}$ ($N_{\mathrm{train}}='+ str(n_train)+'$)')
+				ax_rel_err.legend(loc='best')
+				tqdm.write('[N_train = {}, Legend = {}]\t : Geometric mean [Mean | Mean-Std | Mean+Std] -> {:.4f} | {:.4f} | {:.4f}'.format(n_train, legend, float(gm_rel_err[0]), float(gm_rel_err[1]), float(gm_rel_err[2])))
 		ax_gm_rerr.plot(training_list, list_gm_err_mean, color=color, linewidth=linewidth, marker=markerstyle, markersize=markersize, label=legend)
 		ax_gm_rerr.fill_between(training_list, list_gm_err_min, list_gm_err_max, linewidth=linewidth, facecolor=color, alpha=alpha_std)
 	ax_gm_rerr.legend(loc='best')
 	#########################################################################################################################
 	# Save the remaining figures
 	for n_train, (ax_rel_err, m_fig) in zip(log_data.sampleLog.disable_substep[1],list_axes_rel_err):
-		tikzplotlib.clean_figure(fig=m_fig)
-		tikzplotlib.save(dir_save+'/relerr_{}.tex'.format(n_train), figure=m_fig)
-		m_fig.savefig(dir_save+'/relerr_{}.svg'.format(n_train), dpi=300)
+			tikzplotlib.clean_figure(fig=m_fig)
+			tikzplotlib.save(dir_save+'/relerr_{}.tex'.format(n_train), figure=m_fig)
+			m_fig.savefig(dir_save+'/relerr_{}.svg'.format(n_train), dpi=300)
 	tikzplotlib.clean_figure(fig=figure_gm_rerr)
-	tikzplotlib.save(dir_save+'/geomrelerr.tex', figure=figure_gm_rerr)
+	# tikzplotlib.save(dir_save+'/geomrelerr.tex', figure=figure_gm_rerr)
 	figure_gm_rerr.savefig(dir_save+'/geomrelerr.svg', dpi=300)
 	# Plot the state evolution to show the accuracy
 	plt.show()

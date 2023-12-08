@@ -1,0 +1,341 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{cyan}{RGB}{0,255,255}
+\definecolor{darkblue}{RGB}{0,0,139}
+\definecolor{darkcyan}{RGB}{0,139,139}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{darkred}{RGB}{139,0,0}
+\definecolor{lightgray204}{RGB}{204,204,204}
+
+\begin{groupplot}[group style={group size=2 by 2}]
+\nextgroupplot[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=lightgray204
+},
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={\(\displaystyle \mathrm{Time \ steps}\)},
+xmajorgrids,
+xmin=-50, xmax=1050,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \mathrm{Total \ loss}\) (\(\displaystyle N_{\mathrm{train}}=1\))},
+ymajorgrids,
+ymin=0.00403967760037631, ymax=0.0383550933608785,
+ytick style={color=black}
+]
+\path [fill=red, fill opacity=0.2, semithick]
+(axis cs:0,0.00664054593071342)
+--(axis cs:0,0.00612546829506755)
+--(axis cs:100,0.00722977463155985)
+--(axis cs:200,0.00940382517874241)
+--(axis cs:300,0.012828634493053)
+--(axis cs:400,0.0168013744056225)
+--(axis cs:500,0.0205118345096707)
+--(axis cs:600,0.0240727692842484)
+--(axis cs:700,0.0274707276374102)
+--(axis cs:800,0.0295265376567841)
+--(axis cs:900,0.03056515827775)
+--(axis cs:1000,0.031140923127532)
+--(axis cs:1000,0.0367953017354012)
+--(axis cs:1000,0.0367953017354012)
+--(axis cs:900,0.0340230289846659)
+--(axis cs:800,0.0307964235544205)
+--(axis cs:700,0.0276667922735214)
+--(axis cs:600,0.0257386837154627)
+--(axis cs:500,0.0225148217752576)
+--(axis cs:400,0.0187538135796785)
+--(axis cs:300,0.0145001797005534)
+--(axis cs:200,0.0108430207706988)
+--(axis cs:100,0.00813816525042057)
+--(axis cs:0,0.00664054593071342)
+--cycle;
+
+\path [fill=blue, fill opacity=0.2, semithick]
+(axis cs:0,0.00644396645948291)
+--(axis cs:0,0.00600586859509349)
+--(axis cs:100,0.00697540361434221)
+--(axis cs:200,0.00882681626826525)
+--(axis cs:300,0.0118370443582535)
+--(axis cs:400,0.0153400805778801)
+--(axis cs:500,0.018588163331151)
+--(axis cs:600,0.0218416644260287)
+--(axis cs:700,0.0245190393179655)
+--(axis cs:800,0.0270882721990347)
+--(axis cs:900,0.0278020277619362)
+--(axis cs:1000,0.0277953509241343)
+--(axis cs:1000,0.0320580951869488)
+--(axis cs:1000,0.0320580951869488)
+--(axis cs:900,0.0296565558761358)
+--(axis cs:800,0.0272735185921192)
+--(axis cs:700,0.0257667779922485)
+--(axis cs:600,0.0242007739841938)
+--(axis cs:500,0.0212194995954633)
+--(axis cs:400,0.017594307474792)
+--(axis cs:300,0.0137957804836333)
+--(axis cs:200,0.0103786850348115)
+--(axis cs:100,0.00782819548621774)
+--(axis cs:0,0.00644396645948291)
+--cycle;
+
+\path [fill=cyan, fill opacity=0.2, semithick]
+(axis cs:0,0.00583362802863121)
+--(axis cs:0,0.00559946922585368)
+--(axis cs:100,0.00612555425614119)
+--(axis cs:200,0.00730903120711446)
+--(axis cs:300,0.00924490243196487)
+--(axis cs:400,0.0117959697730839)
+--(axis cs:500,0.0141868902370334)
+--(axis cs:600,0.0165153007954359)
+--(axis cs:700,0.0179663419723511)
+--(axis cs:800,0.0188816819339991)
+--(axis cs:900,0.0196697272360325)
+--(axis cs:1000,0.0206717196851969)
+--(axis cs:1000,0.0246000256389379)
+--(axis cs:1000,0.0246000256389379)
+--(axis cs:900,0.0225008860230446)
+--(axis cs:800,0.0203455284237862)
+--(axis cs:700,0.018484123237431)
+--(axis cs:600,0.016894644126296)
+--(axis cs:500,0.015162112377584)
+--(axis cs:400,0.0130342465825379)
+--(axis cs:300,0.0105203706771135)
+--(axis cs:200,0.00831915568560362)
+--(axis cs:100,0.00667357631027699)
+--(axis cs:0,0.00583362802863121)
+--cycle;
+
+\addplot [semithick, darkred, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00638306140899658
+100 0.00768399238586426
+200 0.0101233720779419
+300 0.0136643648147583
+400 0.0177775621414185
+500 0.0215133428573608
+600 0.0249056816101074
+700 0.0275688171386719
+800 0.0301614999771118
+900 0.0322940349578857
+1000 0.0339680910110474
+};
+\addlegendentry{No denoising}
+\addplot [semithick, darkblue, dash pattern=on 10pt off 5pt]
+table {%
+0 0.0062248706817627
+100 0.00740182399749756
+200 0.00960278511047363
+300 0.0128164291381836
+400 0.0164672136306763
+500 0.0199037790298462
+600 0.0230212211608887
+700 0.0251429080963135
+800 0.0271809101104736
+900 0.0287293195724487
+1000 0.0299267768859863
+};
+\addlegendentry{With denoising}
+\addplot [semithick, darkcyan, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00571656227111816
+100 0.00639951229095459
+200 0.00781404972076416
+300 0.00988268852233887
+400 0.0124150514602661
+500 0.0146745443344116
+600 0.0167049169540405
+700 0.0182251930236816
+800 0.0196136236190796
+900 0.021085262298584
+1000 0.022635817527771
+};
+\addlegendentry{With big denoising}
+
+\nextgroupplot[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=lightgray204
+},
+log basis y={10},
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={\(\displaystyle \mathrm{Time \ steps}\)},
+xmajorgrids,
+xmin=-50, xmax=1050,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \mathrm{Mean \ squared \ loss}\) (\(\displaystyle N_{\mathrm{train}}=1\))},
+ymajorgrids,
+ymin=0.00509641239383685, ymax=0.0404272931358359,
+ymode=log,
+ytick style={color=black}
+]
+\path [fill=red, fill opacity=0.4, semithick]
+(axis cs:0,0.00664054602384567)
+--(axis cs:0,0.00612546782940626)
+--(axis cs:100,0.00722977425903082)
+--(axis cs:200,0.00940382480621338)
+--(axis cs:300,0.0128286331892014)
+--(axis cs:400,0.0168013721704483)
+--(axis cs:500,0.020511832088232)
+--(axis cs:600,0.0240727700293064)
+--(axis cs:700,0.0274707265198231)
+--(axis cs:800,0.0295265354216099)
+--(axis cs:900,0.0305651593953371)
+--(axis cs:1000,0.031140923500061)
+--(axis cs:1000,0.0367953032255173)
+--(axis cs:1000,0.0367953032255173)
+--(axis cs:900,0.0340230278670788)
+--(axis cs:800,0.0307964235544205)
+--(axis cs:700,0.0276667885482311)
+--(axis cs:600,0.0257386825978756)
+--(axis cs:500,0.0225148219615221)
+--(axis cs:400,0.0187538117170334)
+--(axis cs:300,0.0145001783967018)
+--(axis cs:200,0.0108430199325085)
+--(axis cs:100,0.00813816487789154)
+--(axis cs:0,0.00664054602384567)
+--cycle;
+
+\path [fill=blue, fill opacity=0.4, semithick]
+(axis cs:0,0.00644396711140871)
+--(axis cs:0,0.00600586924701929)
+--(axis cs:100,0.00697540398687124)
+--(axis cs:200,0.00882681645452976)
+--(axis cs:300,0.0118370447307825)
+--(axis cs:400,0.0153400804847479)
+--(axis cs:500,0.0185881666839123)
+--(axis cs:600,0.0218416657298803)
+--(axis cs:700,0.0245190393179655)
+--(axis cs:800,0.0270882733166218)
+--(axis cs:900,0.027802025899291)
+--(axis cs:1000,0.0277953520417213)
+--(axis cs:1000,0.032058097422123)
+--(axis cs:1000,0.032058097422123)
+--(axis cs:900,0.0296565555036068)
+--(axis cs:800,0.0272735171020031)
+--(axis cs:700,0.0257667787373066)
+--(axis cs:600,0.024200776591897)
+--(axis cs:500,0.0212195031344891)
+--(axis cs:400,0.0175943095237017)
+--(axis cs:300,0.0137957828119397)
+--(axis cs:200,0.0103786867111921)
+--(axis cs:100,0.00782819651067257)
+--(axis cs:0,0.00644396711140871)
+--cycle;
+
+\path [fill=cyan, fill opacity=0.4, semithick]
+(axis cs:0,0.00583362765610218)
+--(axis cs:0,0.00559946894645691)
+--(axis cs:100,0.00612555397674441)
+--(axis cs:200,0.00730903213843703)
+--(axis cs:300,0.00924490205943584)
+--(axis cs:400,0.0117959696799517)
+--(axis cs:500,0.0141868889331818)
+--(axis cs:600,0.0165152996778488)
+--(axis cs:700,0.0179663430899382)
+--(axis cs:800,0.0188816823065281)
+--(axis cs:900,0.0196697283536196)
+--(axis cs:1000,0.020671721547842)
+--(axis cs:1000,0.0246000234037638)
+--(axis cs:1000,0.0246000234037638)
+--(axis cs:900,0.0225008819252253)
+--(axis cs:800,0.0203455239534378)
+--(axis cs:700,0.0184841193258762)
+--(axis cs:600,0.016894644126296)
+--(axis cs:500,0.015162113122642)
+--(axis cs:400,0.0130342468619347)
+--(axis cs:300,0.0105203706771135)
+--(axis cs:200,0.00831915624439716)
+--(axis cs:100,0.00667357677593827)
+--(axis cs:0,0.00583362765610218)
+--cycle;
+
+\addplot [semithick, darkred, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00638300739228725
+100 0.00768396817147732
+200 0.0101234223693609
+300 0.0136644067242742
+400 0.0177775919437408
+500 0.0215133298188448
+600 0.0249057281762362
+700 0.027568755671382
+800 0.03016147762537
+900 0.0322940908372402
+1000 0.0339681133627892
+};
+\addlegendentry{No denoising}
+\addplot [semithick, darkblue, dash pattern=on 10pt off 5pt]
+table {%
+0 0.006224918179214
+100 0.00740179978311062
+200 0.00960275065153837
+300 0.0128164133056998
+400 0.0164671950042248
+500 0.0199038330465555
+600 0.0230212230235338
+700 0.0251429099589586
+800 0.0271808914840221
+900 0.0287292916327715
+1000 0.0299267247319221
+};
+\addlegendentry{With denoising}
+\addplot [semithick, darkcyan, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00571654923260212
+100 0.00639956491068006
+200 0.00781409256160259
+300 0.00988263636827469
+400 0.0124151082709432
+500 0.0146745024248958
+600 0.016704972833395
+700 0.0182252302765846
+800 0.0196136012673378
+900 0.0210853032767773
+1000 0.0226358734071255
+};
+\addlegendentry{With big denoising}
+
+\nextgroupplot[
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=-50, xmax=1050,
+xtick style={color=black},
+y grid style={darkgray176},
+ymin=0, ymax=1,
+ytick style={color=black}
+]
+
+\nextgroupplot[
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=-50, xmax=1050,
+xtick style={color=black},
+y grid style={darkgray176},
+ymin=0, ymax=1,
+ytick style={color=black}
+]
+\end{groupplot}
+
+\end{tikzpicture}

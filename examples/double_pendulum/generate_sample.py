@@ -60,14 +60,12 @@ def pendulum_analytical(state: jnp.ndarray, u: jnp.ndarray = None, t: jnp.float3
 # batch_dfun = jax.jit(jax.vmap(f_analytical))
 
 # this function gets actually called during training, not during data generation
-def custom_constraints(state, u=None, f1=None, f2=None, extra_args=None, **kwargs):
+def custom_constraints(state, u=None, f1=None, f2=None):
     """ Build the constraints on the unknown terms of the dynamics
             THIS FUNCTION TAKES BATCHES AS INPUTS AND RETURNS A COUPLE OF EQUALITY AND INEQUALITY CONSTRAINTS
     """
     ineqContr = jnp.array([])
     xfus = jnp.hstack((state, u)) if u is not None else state
-    if f1 is None or f2 is None:
-        return jnp.array([]), jnp.array([])
     f1_fun, ind1 = f1
     f2_fun, ind2 = f2
     # c1 = f1_fun(xfus[:,ind1]) + f1_fun(-xfus[:,ind1])
@@ -78,7 +76,6 @@ def custom_constraints(state, u=None, f1=None, f2=None, extra_args=None, **kwarg
     c4 = f2Val + f2_fun(jnp.hstack((-xfus[:, 0:2], xfus[:, 2:3])))
     c5 = f1Val - f1_fun(jnp.hstack((xfus[:, 0:2], -xfus[:, 3:4])))
     c6 = f2Val - f2_fun(jnp.hstack((xfus[:, 0:2], -xfus[:, 2:3])))
-    print("\n Constraints obtained in custom_constraints", c3, c4, c5, c6, ineqContr)
     return jnp.hstack((c3, c4, c5, c6)), ineqContr
 
 # def custom_constraints(state, u=None, f1=None, f2=None):
@@ -127,7 +124,7 @@ def gen_domain_shift(rng_key, time_step, num_traj, trajectory_length, n_rollout,
                 subkey, shape=x0_init_lb.shape, minval=x0_init_lb, maxval=x0_init_ub)
             # Two dimension array with
             xnextVal = solve_analytical(x0val, tIndexes)
-            if noisy:
+            if noisy and noise > 0.00001:
                 key = random.PRNGKey(0)
                 xnextVal = add_gaussian_noise(key, xnextVal, noise)
             fknown1, fknown2 = jax.vmap(

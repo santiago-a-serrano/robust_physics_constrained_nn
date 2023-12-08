@@ -84,7 +84,7 @@ class PhyConstrainedNets(hk.Module):
 
 
 	# @abstractmethod
-	def vector_field_and_unknown(self, x, u=None, extra_args=None, dropout_rate=None, rng=None):
+	def vector_field_and_unknown(self, x, u=None, extra_args=None, dropout_rate=0, rng=None, seed=0):
 		""" This function defines the underlying dynamics of the system and encodes the known terms. 
 			Specifically, we assume that \dot{x} = f(x, u, g_1(x,u), g_2(x,u), ...) where f is known but
 			the functions g_1(.), g_2(.) of the susbset of variables and controls are potentially
@@ -108,7 +108,10 @@ class PhyConstrainedNets(hk.Module):
 			fus_xu = (fus_xu - mean_val) / std_val
 
 		# Need to handle the case where the inputs are one dimensional compared to batch inputs
-		dictEval = { var_name : nn_val(fus_xu[:,xu_index], dropout_rate, rng)  \
+		if rng is None:
+			seed = 0 if seed is None else seed
+			rng = jax.random.PRNGKey(seed)
+		dictEval = { var_name : nn_val(fus_xu[:,xu_index], dropout_rate=dropout_rate, rng=rng)  \
 						for (var_name, (nn_val, xu_index)) in self._unknown_terms.items()}
 		if self._known_dynamics is None:
 			(fName, fValue), = dictEval.items()
@@ -118,7 +121,7 @@ class PhyConstrainedNets(hk.Module):
 		else:
 			return self._known_dynamics(x, u, **dictEval), dictEval
 
-	def vector_field(self, x, u=None, extra_args=None, dropout_rate=None, rng=None):
+	def vector_field(self, x, u=None, extra_args=None, dropout_rate=0, rng=None, seed=0):
 		""" This function defines the underlying dynamics of the system and encodes the known terms. 
 			Specifically, we assume that \dot{x} = f(x, u, g_1(x,u), g_2(x,u), ...) where f is known but
 			the functions g_1(.), g_2(.) of the susbset of variables and controls are potentially
@@ -134,7 +137,7 @@ class PhyConstrainedNets(hk.Module):
 			:params dropout_rate : The dropout rate applied to the neural network to estimate k(x_t,u_t)
 			:params rng : A key for randomness when dropout is applied
 		"""
-		vfield, _ = self.vector_field_and_unknown(x, u, extra_args, dropout_rate, rng)
+		vfield, _ = self.vector_field_and_unknown(x, u, extra_args, dropout_rate, rng, seed=seed)
 		return vfield
 
 	# @abstractmethod
@@ -162,28 +165,35 @@ class PhyConstrainedNets(hk.Module):
 			print("\nNo constraints")
 		elif extra_args is not None:
 			constraints = self._constraints_dynamics(x,u, extra_args=extra_args,**self._unknown_terms)
-			print("\nConstraints: ", constraints[0], constraints[1])
+			print("There are constraints")
 		else:
 			constraints = self._constraints_dynamics(x,u, **self._unknown_terms)
-			print("\nConstraints: ", constraints[0], constraints[1])
+			print("There are constraints")
 		
 		key = jax.random.PRNGKey(0)
-		return add_gaussian_noise_tuple(key, constraints, constraint_noise)
+		print(constraint_noise)
+		if constraint_noise > 0.00001:
+			return add_gaussian_noise_tuple(key, constraints, constraint_noise)
+		else:
+			return constraints
 
 
-	def __call__(self, x, u=None, extra_args=None, dropout_rate=None, rng=None):
+	def __call__(self, x, u=None, extra_args=None, dropout_rate=0, rng=None, seed=0):
 		""" This function implements the formula that extracts the next state of the system given 
 			its current state and the currently-applied control signal
 		"""
 		# Evaluate the vector field at the current state and input
-		xField, nnEvals = self.vector_field_and_unknown(x, u, extra_args, dropout_rate, rng)
+		if rng is None:
+			seed = 0 if seed is None else seed
+			rng = jax.random.PRNGKey(seed)
+		xField, nnEvals = self.vector_field_and_unknown(x=x, u=u, extra_args=extra_args, dropout_rate=dropout_rate, rng=rng, seed=seed)
 
 		# In case the integrator is a more complicated scheme as RK4
 		if self._ODESolver == 'rk4':
 			k1 = xField
-			k2, _ = self.vector_field_and_unknown(x+ 0.5 * self._time_step * k1, u, extra_args, dropout_rate, rng)
-			k3, _ = self.vector_field_and_unknown(x+ 0.5 * self._time_step * k2, u, extra_args, dropout_rate, rng)
-			k4, _ = self.vector_field_and_unknown(x+ 1.0 * self._time_step * k3, u, extra_args, dropout_rate, rng)
+			k2, _ = self.vector_field_and_unknown(x+ 0.5 * self._time_step * k1, u, extra_args, dropout_rate, rng, seed=seed)
+			k3, _ = self.vector_field_and_unknown(x+ 0.5 * self._time_step * k2, u, extra_args, dropout_rate, rng, seed=seed)
+			k4, _ = self.vector_field_and_unknown(x+ 1.0 * self._time_step * k3, u, extra_args, dropout_rate, rng, seed=seed)
 			return x + (self._time_step/6.0)*(k1 + k2 + k3 + k4), xField, nnEvals, jnp.zeros_like(xField)
 
 		# In case the integrator is the simpler 1 step euler approach
@@ -199,7 +209,7 @@ class PhyConstrainedNets(hk.Module):
 def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, ncontrol, nn_params, ODESolver, 
 								known_dynamics=None, constraints_dynamics=None, pen_l2=1e-4, pen_constr={}, 
 								batch_size=1, extra_args_init=None, train_with_constraints = False, normalize=True,
-								constraint_noise=0):
+								constraint_noise=0, seed=0):
 	""" This function builds a neural network to estimate future state values while encoding side information about 
 		the dynamics. Specifically, it returns a function to estimate next state and a function to update the network parameters.
 		:param rng_key 					: A key for random initialization of the parameters of the neural networs
@@ -229,7 +239,7 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 
 
 	# First define a function to estimate the future state
-	def pred_next_state_full(x, u=None, extra_args=None, extra_args_colocation=(None, None, None), constr_fun=None, constraint_noise=0):
+	def pred_next_state_full(x, u=None, extra_args=None, extra_args_colocation=(None, None, None), constr_fun=None, constraint_noise=0, seed=0):
 		""" This function estimates the next state given the current state and current control input. It also returns
 			the estimation of the vector fied, the unknown terms, the remainder term, the equality and inequality constraints at x and u.
 			The inputs x and u must be two dimensional array as batches.
@@ -247,14 +257,14 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		x_coloc, u_coloc, xextra_coloc = extra_args_colocation
 		eqCterms_coloc, ineqCterms_coloc = objNN.constraints(x_coloc, u_coloc, xextra_coloc, constraint_noise) if x_coloc is not None else (jnp.array([]), jnp.array([]))
 		# Evaluate the ODESolver for obtaining the next state
-		nextX, vectorfieldX, unkTermsAtX, remTermAtX =  objNN(x, u, extra_args) if x is not None else (jnp.array([]), jnp.array([]), jnp.array([]), jnp.array([]))
+		nextX, vectorfieldX, unkTermsAtX, remTermAtX =  objNN(x, u, extra_args, seed=seed) if x is not None else (jnp.array([]), jnp.array([]), jnp.array([]), jnp.array([]))
 		return nextX, vectorfieldX, unkTermsAtX, remTermAtX, (eqCterms, eqCterms_coloc), (ineqCterms, ineqCterms_coloc)
 
 	# Predict the next state with disabling constraints if requested
-	pred_next_state = lambda x, u=None, extra_args=None, extra_args_colocation=(None, None, None): pred_next_state_full(x, u, extra_args, extra_args_colocation, None if not train_with_constraints else constraints_dynamics, constraint_noise)
+	pred_next_state = lambda x, u=None, extra_args=None, extra_args_colocation=(None, None, None): pred_next_state_full(x, u, extra_args, extra_args_colocation, None if not train_with_constraints else constraints_dynamics, constraint_noise, seed=seed)
 
 	# Predict the next state with constraints enabled
-	pred_next_state_constr = lambda x, u=None, extra_args=None, extra_args_colocation=(None, None, None): pred_next_state_full(x, u, extra_args, extra_args_colocation, constraints_dynamics, constraint_noise)
+	pred_next_state_constr = lambda x, u=None, extra_args=None, extra_args_colocation=(None, None, None): pred_next_state_full(x, u, extra_args, extra_args_colocation, constraints_dynamics, constraint_noise, seed=seed)
 
 	# Random x and u initialization to build network parameters
 	dummy_x_init = jax.numpy.zeros((batch_size,nstate))

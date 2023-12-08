@@ -157,7 +157,7 @@ def build_learner(paramsNN, env=None, baseline='base'):
 												paramsNN.n_state, paramsNN.n_control, nn_params, apriori_net, known_dynamics=None, 
 												constraints_dynamics=None, pen_l2= paramsNN.pen_l2, pen_constr=paramsNN.pen_constr, 
 												batch_size=paramsNN.batch_size, extra_args_init=n_inactive, 
-												train_with_constraints=train_with_constraints)
+												train_with_constraints=train_with_constraints, seed=paramsNN.seed_init)
 
 	################################################################
 	elif type_sideinfo == 1 or type_sideinfo == 2:
@@ -207,7 +207,7 @@ def build_learner(paramsNN, env=None, baseline='base'):
 												nn_params, apriori_net, known_dynamics=jax.vmap(sideinfo), 
 												constraints_dynamics=None, pen_l2= paramsNN.pen_l2,
 												pen_constr=paramsNN.pen_constr, batch_size=paramsNN.batch_size,
-												extra_args_init=n_inactive, train_with_constraints=train_with_constraints)
+												extra_args_init=n_inactive, train_with_constraints=train_with_constraints, seed=paramsNN.seed_init)
 
 	#################################################################
 
@@ -277,7 +277,7 @@ def build_learner(paramsNN, env=None, baseline='base'):
 												nn_params, apriori_net, known_dynamics=jax.vmap(sideinfo), 
 												constraints_dynamics=contact_constraints, pen_l2= paramsNN.pen_l2,
 												pen_constr=paramsNN.pen_constr, batch_size=paramsNN.batch_size,
-												extra_args_init=n_inactive, train_with_constraints=train_with_constraints)
+												extra_args_init=n_inactive, train_with_constraints=train_with_constraints, seed=paramsNN.seed_init)
 
 	else:
 		raise("Not implemented yet !")

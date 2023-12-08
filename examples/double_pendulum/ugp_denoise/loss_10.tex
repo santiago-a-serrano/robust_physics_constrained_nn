@@ -1,0 +1,248 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{darkorange}{RGB}{255,140,0}
+\definecolor{darkred}{RGB}{139,0,0}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{orange}{RGB}{255,165,0}
+
+\begin{groupplot}[group style={group size=2 by 2}]
+\nextgroupplot[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=lightgray204},
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={\(\displaystyle \mathrm{Time \ steps}\)},
+xmin=-55, xmax=1155,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \mathrm{Total \ loss}\) (\(\displaystyle N_{\mathrm{train}}=10\))},
+ymin=-4.48202939878684e-06, ymax=0.00286411210276128,
+ytick style={color=black}
+]
+\path [fill=red, fill opacity=0.2, semithick]
+(axis cs:0,0.00273372146039037)
+--(axis cs:0,0.00260698880883865)
+--(axis cs:100,0.00128479126433376)
+--(axis cs:200,0.000193086915533058)
+--(axis cs:300,0.000164850614964962)
+--(axis cs:400,0.000168679915077519)
+--(axis cs:500,0.000170904488186352)
+--(axis cs:600,0.000169157152413391)
+--(axis cs:700,0.000172107375692576)
+--(axis cs:800,0.000167205272009596)
+--(axis cs:900,0.000171426983433776)
+--(axis cs:1000,0.000169071313575841)
+--(axis cs:1100,0.000168689936981536)
+--(axis cs:1100,0.000174965552287176)
+--(axis cs:1100,0.000174965552287176)
+--(axis cs:1000,0.000179445702815428)
+--(axis cs:900,0.000171542313182727)
+--(axis cs:800,0.00017733963613864)
+--(axis cs:700,0.000173161918064579)
+--(axis cs:600,0.000181687599979341)
+--(axis cs:500,0.000177787663415074)
+--(axis cs:400,0.000174526966293342)
+--(axis cs:300,0.000165960895537864)
+--(axis cs:200,0.000290617409336846)
+--(axis cs:100,0.00142202135029947)
+--(axis cs:0,0.00273372146039037)
+--cycle;
+
+\path [fill=orange, fill opacity=0.2, semithick]
+(axis cs:0,0.00272220441547688)
+--(axis cs:0,0.00258907306415495)
+--(axis cs:100,0.00126121403591242)
+--(axis cs:200,0.000150736013893038)
+--(axis cs:300,0.000125908612972125)
+--(axis cs:400,0.000138157022593077)
+--(axis cs:500,0.000146821685484611)
+--(axis cs:600,0.000154882849892601)
+--(axis cs:700,0.000164987499010749)
+--(axis cs:800,0.000167026379494928)
+--(axis cs:900,0.000171196533483453)
+--(axis cs:1000,0.000175673450576141)
+--(axis cs:1100,0.000181087711825967)
+--(axis cs:1100,0.000192218541633338)
+--(axis cs:1100,0.000192218541633338)
+--(axis cs:1000,0.00018614794826135)
+--(axis cs:900,0.000178718421375379)
+--(axis cs:800,0.000177008932223544)
+--(axis cs:700,0.000167498667724431)
+--(axis cs:600,0.000157014140859246)
+--(axis cs:500,0.000158308577374555)
+--(axis cs:400,0.000151699609705247)
+--(axis cs:300,0.000147206804831512)
+--(axis cs:200,0.000266635161824524)
+--(axis cs:100,0.00140372531022876)
+--(axis cs:0,0.00272220441547688)
+--cycle;
+
+\addplot [semithick, darkred, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00267040729522705
+100 0.00135338306427002
+200 0.000241875648498535
+300 0.000165462493896484
+400 0.000171661376953125
+500 0.000174403190612793
+600 0.00017547607421875
+700 0.000172615051269531
+900 0.000171542167663574
+1000 0.000174283981323242
+1100 0.000171780586242676
+};
+\addlegendentry{No GP Denoising}
+\addplot [semithick, darkorange, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00265562534332275
+100 0.00133252143859863
+200 0.000208735466003418
+300 0.000136613845825195
+400 0.00014495849609375
+500 0.000152587890625
+600 0.000155925750732422
+700 0.00016629695892334
+800 0.000172019004821777
+900 0.000174999237060547
+1100 0.000186681747436523
+};
+\addlegendentry{With best GP Denoising}
+
+\nextgroupplot[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=lightgray204},
+log basis y={10},
+scaled x ticks=manual:{}{\pgfmathparse{#1}},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={\(\displaystyle \mathrm{Time \ steps}\)},
+xmin=-55, xmax=1155,
+xtick style={color=black},
+xticklabels={},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \mathrm{Mean \ squared \ loss}\) (\(\displaystyle N_{\mathrm{train}}=10\))},
+ymin=0.000107949348287292, ymax=0.00318852051341155,
+ymode=log,
+ytick style={color=black}
+]
+\path [fill=red, fill opacity=0.4, semithick]
+(axis cs:0,0.00273372139781713)
+--(axis cs:0,0.00260698888450861)
+--(axis cs:100,0.00128479138948023)
+--(axis cs:200,0.000193087005754933)
+--(axis cs:300,0.000164850614964962)
+--(axis cs:400,0.000168679835041985)
+--(axis cs:500,0.000170904590049759)
+--(axis cs:600,0.000169157050549984)
+--(axis cs:700,0.000172107291291468)
+--(axis cs:800,0.000167205187608488)
+--(axis cs:900,0.000171427062014118)
+--(axis cs:1000,0.000169071179698221)
+--(axis cs:1100,0.000168689715792425)
+--(axis cs:1100,0.000174965709447861)
+--(axis cs:1100,0.000174965709447861)
+--(axis cs:1000,0.000179445749381557)
+--(axis cs:900,0.000171542167663574)
+--(axis cs:800,0.000177339650690556)
+--(axis cs:700,0.000173161926795729)
+--(axis cs:600,0.000181687617441639)
+--(axis cs:500,0.000177787616848946)
+--(axis cs:400,0.000174527056515217)
+--(axis cs:300,0.000165960926096886)
+--(axis cs:200,0.000290617521386594)
+--(axis cs:100,0.00142202153801918)
+--(axis cs:0,0.00273372139781713)
+--cycle;
+
+\path [fill=orange, fill opacity=0.4, semithick]
+(axis cs:0,0.00272220419719815)
+--(axis cs:0,0.00258907303214073)
+--(axis cs:100,0.00126121402718127)
+--(axis cs:200,0.000150736042996868)
+--(axis cs:300,0.000125908482004888)
+--(axis cs:400,0.000138156858156435)
+--(axis cs:500,0.000146821519592777)
+--(axis cs:600,0.000154882669448853)
+--(axis cs:700,0.000164987708558328)
+--(axis cs:800,0.00016702656284906)
+--(axis cs:900,0.000171196646988392)
+--(axis cs:1000,0.000175673514604568)
+--(axis cs:1100,0.000181087671080604)
+--(axis cs:1100,0.000192218460142612)
+--(axis cs:1100,0.000192218460142612)
+--(axis cs:1000,0.000186147910426371)
+--(axis cs:900,0.000178718386450782)
+--(axis cs:800,0.000177008827449754)
+--(axis cs:700,0.000167498554219492)
+--(axis cs:600,0.000157014277647249)
+--(axis cs:500,0.000158308626851067)
+--(axis cs:400,0.000151699598063715)
+--(axis cs:300,0.000147206708788872)
+--(axis cs:200,0.00026663503376767)
+--(axis cs:100,0.00140372500754893)
+--(axis cs:0,0.00272220419719815)
+--cycle;
+
+\addplot [semithick, darkred, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00267035490833223
+100 0.00135340646374971
+200 0.000241852263570763
+300 0.000165405785082839
+400 0.00017160341667477
+500 0.000174346074345522
+600 0.000175422319443896
+700 0.000172634579939768
+800 0.00017227245552931
+900 0.000171484658494592
+1000 0.000174258413608186
+1100 0.000171827676240355
+};
+\addlegendentry{No GP Denoising}
+\addplot [semithick, darkorange, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00265563908033073
+100 0.00133246916811913
+200 0.000208685538382269
+300 0.000136557602672838
+400 0.000144928257213905
+500 0.000152565116877668
+600 0.000155948509927839
+700 0.000166243116836995
+800 0.000172017666045576
+900 0.000174957502167672
+1000 0.000180910763447173
+1100 0.000186653094715439
+};
+\addlegendentry{With best GP Denoising}
+
+\nextgroupplot[
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=-55, xmax=1155,
+xtick style={color=black},
+y grid style={darkgray176},
+ymin=0, ymax=1,
+ytick style={color=black}
+]
+
+\nextgroupplot[
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=-55, xmax=1155,
+xtick style={color=black},
+y grid style={darkgray176},
+ymin=0, ymax=1,
+ytick style={color=black}
+]
+\end{groupplot}
+
+\end{tikzpicture}

@@ -140,8 +140,8 @@ def gen_domain_shift(rng_key, time_step, num_traj, trajectory_length, n_rollout,
             # print("start_seq", start_seq)
             # print("trajectory_length", trajectory_length)
             # print("n_rollout", n_rollout)
-            if end_seq - start_seq >= (trajectory_length + n_rollout):
-                xnextVal = xnextVal[start_seq:end_seq, :]
+            if True:
+                xnextVal = xnextVal
                 break
 
         # Check wether a long enough trajectory can be extracted that satisfy pendulum_unknown_terms(state) < 0  or pendulum_unknown_terms(state) > 0

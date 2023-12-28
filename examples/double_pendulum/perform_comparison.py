@@ -10,6 +10,8 @@ import math
 
 from physics_constrained_nn.utils import SampleLog, LearningLog, HyperParamsNN
 
+from sindy_train import SINDy
+
 from train import build_learner
 from generate_sample import gen_samples
 
@@ -17,6 +19,8 @@ import jax
 import jax.numpy as jnp
 
 from tqdm.auto import tqdm
+
+from scipy.io import loadmat
 
 
 def running_mean(x, N):
@@ -208,6 +212,10 @@ if __name__ == "__main__":
     parser.add_argument('--noise', type=float, default=0.05)
     parser.add_argument('--indx_traj_test', type=int, default=0)
     parser.add_argument('--indx_traj', type=int, default=0)
+    parser.add_argument('--train_sindy_path', type=str, default='')
+    parser.add_argument('--sindypi_mat', type=str, default='')
+    parser.add_argument('--use_cached_sindys', type=str, default='')
+    parser.add_argument('--gpsindy', type=bool, default=False)
     args = parser.parse_args()
 
     # Load the data
@@ -427,13 +435,56 @@ if __name__ == "__main__":
     time_index = [actual_dt * i for i in range(args.num_point_in_traj)]
     true_state_evol = testTraj[args.indx_traj_test]
     m_seed = next(iter(mStateEvol[next(iter(mStateEvol))]))
+    print("STARTING POINT: ", true_state_evol[0])
+    sindy_result = None
+    gpsindy_result = None
+    sindy_pi_result = None
+    # JUST USE CACHED SINDYS: --use_cached_sindys string
+    # GENERATE THE CACHED SINDYS: --train_sindy_path string
+    if args.train_sindy_path is not '':
+            try:
+                sindy_result = SINDy(args.train_sindy_path).predict(true_state_evol[0], 100)
+                np.save('{args.train_sindy_path}_sindy_cache.npy', sindy_result)
+            except:
+                pass
+    if args.gpsindy:
+            try:
+                gpsindy_result = SINDy(args.train_sindy_path, gpsindy=True).predict(true_state_evol[0], 100)
+                np.save('{args.train_sindy_path}_gpsindy_cache.npy', gpsindy_result)
+            except:
+                pass
+    if args.sindypi_mat is not '':
+            mat_file = loadmat(args.sindypi_mat)
+            
+    if args.use_cached_sindys is not '':
+        try:
+            sindy_result = np.load('{args.use_cached_sindys}_sindy_cache.npy')
+        except:
+            pass
+        try:
+            gpsindy_result = np.load('{args.use_cached_sindys}_gpsindy_cache.npy')
+        except:
+            pass
     for i in range(len(state_name)):
         plt.figure()
         plt.plot(time_index, true_state_evol[:, i], color='green',
                  linewidth=linewidth, linestyle='dashed', label='True state')
         for legend, color in zip(args.legends, args.colors):
-            plt.plot(time_index, np.array(mStateEvol[legend][m_seed])[
+            plt.plot(time_index, np.array(mStateEvol[legend][m_seed])[ # TODO: This is what is actually being plotted
                      :, i], color=color, linewidth=linewidth, label=legend)
+        # If available, plot the SINDy simulation too
+        if sindy_result != None:
+            try:
+                plt.plot(time_index, sindy_result[:, i], 
+                        color='grey', linewidth=linewidth, label='SINDy')
+            except:
+                pass
+        if gpsindy_result != None:
+            try:
+                plt.plot(time_index, gpsindy_result[:, i],
+                        color='black', linewidth=linewidth, label='GPSINDy')
+            except:
+                pass
         plt.xlabel('Time (s)')
         plt.ylabel(state_name[i])
         plt.legend(loc='best')
@@ -442,5 +493,9 @@ if __name__ == "__main__":
         tikzplotlib.save(dir_save+'/state_{}.tex'.format(i))
         plt.savefig(dir_save+'/state_{}.png'.format(i),
                     dpi=300, transparent=True)
-
+        print(m_seed)
     plt.show()
+
+
+def plot_sme(ground_truth, **kwargs):
+    pass

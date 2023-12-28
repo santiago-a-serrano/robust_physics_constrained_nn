@@ -2,6 +2,7 @@ import yaml
 from collections import namedtuple
 import pickle
 import time
+import pdb
 
 import jax
 import jax.numpy as jnp
@@ -17,7 +18,6 @@ import physics_constrained_nn.gaussian_process_regressor as gpr
 import optax
 
 from tqdm import tqdm
-
 
 def build_params(m_params, output_size=None, input_index=None):
     """ Build the parameters of the neural network from a dictionary
@@ -186,6 +186,7 @@ def load_config_file(path_config_file, extra_args={}):
     optimize_hyperparams = m_config.get('optimize_hyperparams', True)
     big_denoising = m_config.get('big_denoising', True)
     default_sigma_n = m_config.get('default_sigma_n', 0.1)
+    gradient_regularization = m_config.get('gradient_regularization', False)
 
     opt_info = m_config['optimizer']
 
@@ -214,7 +215,7 @@ def load_config_file(path_config_file, extra_args={}):
                                     freq_accuracy=freq_accuracy, freq_save=int(freq_save), patience=patience)
                       for seed_val in seed_list]
 
-    return weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
+    return weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, gradient_regularization, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
 
 def denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, n_rollout, optimize_hyperparams, big_denoising, default_sigma_n):
     trajectories = []
@@ -256,7 +257,7 @@ def gp_denoise_trajectory(trajectory, sigma_f, sigma_l, sigma_n, big_denoising):
 
 def main_fn(path_config_file, extra_args={}):
     # Read the configration file
-    weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
+    weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, gradient_regularization, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
         path_config_file, extra_args)
     reducedSampleLog = SampleLog(xTrain=None, xTrainExtra=None, uTrain=None, xnextTrain=None,
                                  lowU_train=mSampleLog.lowU_train, highU_train=mSampleLog.highU_train,
@@ -290,6 +291,7 @@ def main_fn(path_config_file, extra_args={}):
     # DIctionary for logging training details
     final_log_dict = {i: {} for i in range(len(num_traj_data))}
     final_params_dict = {i: {} for i in range(len(num_traj_data))}
+
 
     for i, n_train in tqdm(enumerate(num_traj_data),  total=len(num_traj_data)):
         # The total number of point in this trajectory
@@ -374,15 +376,15 @@ def main_fn(path_config_file, extra_args={}):
                 if update_freq[number_inner_iteration]:
                     if not train_with_constraints:  # In case there is no constraints -> Try to also log the constraints incurred by the current neural structure
                         loss_tr, (spec_data_tr, coloc_ctr) = loss_fun_constr(
-                            params, xTrainNext, xTrain)
+                            params, xTrainNext, xTrain,  gradient_regularization=gradient_regularization)
                         loss_te, (spec_data_te, coloc_cte) = loss_fun_constr(
-                            params, xTestNext, xTest, extra_args_colocation=(coloc_set, None, None))
+                            params, xTestNext, xTest, extra_args_colocation=(coloc_set, None, None), gradient_regularization=gradient_regularization)
                     else:
                         loss_tr, (spec_data_tr, coloc_ctr) = loss_fun(
-                            params, xTrainNext, xTrain)
+                            params, xTrainNext, xTrain, gradient_regularization=gradient_regularization)
                         loss_te, (spec_data_te, coloc_cte) = loss_fun(params, xTestNext, xTest, pen_eq_k=m_pen_eq_k, pen_ineq_sq_k=m_pen_ineq_k,
                                                                       lagr_eq_k=m_lagr_eq_k, lagr_ineq_k=m_lagr_ineq_k,
-                                                                      extra_args_colocation=(coloc_set, None, None))
+                                                                      extra_args_colocation=(coloc_set, None, None), gradient_regularization=gradient_regularization)
 
                     # Log the value obtained by evaluating the current model
                     dict_loss['total_loss_train'].append(float(loss_tr))

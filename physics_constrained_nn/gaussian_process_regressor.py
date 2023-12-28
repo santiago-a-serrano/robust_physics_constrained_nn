@@ -16,9 +16,9 @@ def cov_matrix(X1, X2, covariance_function, sigma_f, sigma_l):
 def find_optim_hyperparams(trajectory, big_denoising=True):
     t = torch.arange(0, len(trajectory), dtype=torch.float)
     trajectory = torch.from_numpy(trajectory).T
-    print("OPTIMIZING HYPERPARAMETERS")
     model = LogMarginalLikelihood(trajectory, t, big_denoising)
     optimizer = optim.Rprop(model.parameters())
+    print("OPTIMIZING HYPERPARAMETERS with optimizer", optimizer)
     epoch = 0
 
     best_lml = None

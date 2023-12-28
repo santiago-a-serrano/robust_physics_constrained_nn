@@ -17,9 +17,12 @@ perform_gp_denoising: False
 # Use Log Marginal Likelihood to find the best hyperparameters for the GP denoising
 optimize_hyperparams: False 
 # Don't square the noise in the calculations, so it doesn't end up even smaller
-big_denoising: True
+big_denoising: False
 # The sigma_n (noise) that will be used for denoising if the hyperparameters are not optimized (optimize_hyperparams: False)
 default_sigma_n: 0.01
+
+# Choose if adapt the loss function in order to do gradient regularization
+gradient_regulation: False
 
 # The file that contains the training and testing dataset
 train_data_file: ./data/datatrain_dt0p01.pkl

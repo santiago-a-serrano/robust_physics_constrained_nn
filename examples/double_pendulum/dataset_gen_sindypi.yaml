@@ -1,0 +1,35 @@
+# An example of config file for training/testing data generation
+# This example contains the full set of allowed parameters --> Some of them can be ignored
+
+# Gaussian training data noise, defaults to 0.1 if no value:
+noise: 0.1
+
+# The time step in the environment
+time_step: 0.001
+
+# File used to save the dataset: Without any extension
+output_file: data/datatrain_dt0p01
+
+# Initial seed used by the random number generator for reproducibility
+seed: 101
+
+# Rollout horizon
+n_rollout: 5
+
+# Number of colocation points
+n_coloc: 10000
+
+# Training and testing initial condition
+x0_init_lb_train: [-0.514, -0.514, -0.3, -0.3]
+x0_init_ub_train: [0, 0, 0.3, 0.3]
+x0_init_lb_test: [-0.514, -0.514, -0.6, -0.6]
+x0_init_ub_test: [0.514, 0.514, 0.6, 0.6]
+
+# When recording the data, reset the environment after max_episode_length -> Each trajectory is 10s
+size_trajectory: 10001
+
+# Number of training trajectory
+num_trajectory_train: [1] # we're getting the max of this. That's why we're training 100 trajectories originally.
+
+# Number of testing trajectory
+num_trajectory_test: 1

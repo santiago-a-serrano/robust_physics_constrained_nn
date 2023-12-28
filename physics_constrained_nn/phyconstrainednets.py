@@ -13,6 +13,9 @@ from physics_constrained_nn.noise_generator import add_gaussian_noise_tuple
 # Typing functions
 from typing import Optional, Tuple
 
+# TODO: Maybe there's a smarter way of accessing the gradient in the loss function than putting this here
+grads = 0
+
 # Physics-based neural networks
 class PhyConstrainedNets(hk.Module):
 	""" Encode an unknown function representing the unknown Lipschitz-continuous dynamics 
@@ -205,7 +208,7 @@ class PhyConstrainedNets(hk.Module):
 
 		raise ('Not implemented')
 
-# TODO: Find in this function what I have to edit to add noise to the constraints. Maybe add the noise as a parameter? constraints_dynamics is the parameter.
+# TODO: Here is where the loss functions is defined.
 def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, ncontrol, nn_params, ODESolver, 
 								known_dynamics=None, constraints_dynamics=None, pen_l2=1e-4, pen_constr={}, 
 								batch_size=1, extra_args_init=None, train_with_constraints = False, normalize=True,
@@ -301,7 +304,10 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 					pen_eq_k : Optional[float] = 0, pen_ineq_sq_k: Optional[float] = 0.0, 
 					lagr_eq_k : Optional[jnp.ndarray] = 0.0,
 					lagr_ineq_k : Optional[jnp.ndarray] = 0.0,
-					extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None)):
+					extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
+					gradient_regularization=False,
+					sigma_noise_norm=0.2,
+					dual_of_p=2):
 		""" Compute the loss function given the current parameters of the custom neural network
 			:param params 		: Weights of all the neural networks
 			:param xnext 		: The target netx state used in the mean squared product
@@ -357,13 +363,31 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		# Compute the total constraint satisfaction
 		coloc_cost = pen_eq_k * cTerm_eq + pen_ineq_sq_k * cTerm_ineq + (0.0 if eqCterms.shape[0] <= 0 else (jnp.sum(lagr_eq_k * eqCterms)/eqCterms.size)) + \
 						(0.0 if ineqCterms.shape[0] <=0 else (jnp.sum(lagr_ineq_k * ineqCterms) / ineqCterms.size))
+		
+		loss_of_x = (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss + coloc_cost
+		
+
+		# global grads
+		# converted_grads = flatmap_to_matrix(grads)
+		# print("loss of x", loss_of_x)
+		# converted_loss_of_x = jax.device_get(loss_of_x.primal)
+		# print("converted loss of x", converted_loss_of_x)
+		# grad_reg = jax.lax.cond(gradient_regularization,
+        #                 lambda _: sigma_noise_norm * jnp.linalg.norm(converted_grads * converted_loss_of_x),
+        #                 lambda _: 0.0,
+        #                 None)
+		
+		grad_reg = 0
 
 		# Return the composite
-		return  (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss + coloc_cost, (m_res, jnp.array([coloc_cost, cTerm_eq, cTerm_ineq]))
+		return loss_of_x + grad_reg, (m_res, jnp.array([coloc_cost, cTerm_eq, cTerm_ineq]))
 
 	# Util function solely for computing colocation loss ehn no constraints are given 
 	def loss_fun_constr(params, xnext : jnp.ndarray, x : jnp.ndarray, u : Optional[jnp.ndarray] = None, extra_args : Optional[jnp.ndarray] = None,
-							extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None)):
+							extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
+							gradient_regularization=False,
+							sigma_noise_norm=0.2,
+							dual_of_p=2):
 		""" Compute the loss function given the current parameters of the custom neural network
 			:param params 		: Weights of all the neural networks
 			:param xnext 		: The target netx state used in the mean squared product
@@ -405,7 +429,21 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		# Check the satisfaction  of ineequality constraints
 		cTerm_ineq = 0.0 if ineqCterms.shape[0] <= 0 else (jnp.sum(jnp.where(ineqCterms > 0, 1.0, 0.0) * jnp.square(ineqCterms)) /  ineqCterms.size)
 
-		return (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss, (m_res, jnp.array([1e-15, cTerm_eq, cTerm_ineq]))
+		loss_of_x = (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss
+
+		# global grads
+		# converted_loss_of_x = jax.device_get(loss_of_x.primal)
+		# converted_grads = flatmap_to_matrix(grads)
+		# print("loss of x", loss_of_x)
+		# print("converted loss of x", converted_loss_of_x)
+		# grad_reg = jax.lax.cond(gradient_regularization,
+        #                 lambda _: sigma_noise_norm * jnp.linalg.norm(converted_grads * converted_loss_of_x),
+        #                 lambda _: 0.0,
+        #                 None)
+
+		grad_reg = 0
+
+		return loss_of_x + grad_reg, (m_res, jnp.array([1e-15, cTerm_eq, cTerm_ineq]))
 
 	# Define the update step
 	def update(params: hk.Params, opt_state: optax.OptState, xnext : jnp.ndarray, x: jnp.ndarray, u : Optional[jnp.ndarray] = None, 
@@ -414,7 +452,8 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 				lagr_eq_k : Optional[jnp.ndarray] = jnp.array([]),
 				lagr_ineq_k : Optional[jnp.ndarray] = jnp.array([]),
 				extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
-				n_iter : int = 1) -> Tuple[hk.Params, optax.OptState]:
+				n_iter : int = 1,
+				gradient_regularization=False) -> Tuple[hk.Params, optax.OptState]:
 		"""Update the parameters of the neural netowkrs via one of the gradient descent optimizer
 			:param params 		: The current weight of the neural network
 			:param opt_state 	: The current state of the optimizer
@@ -431,8 +470,9 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		"""
 		grad_fun = jax.grad(loss_fun, has_aux=True)
 		def loop_fun_val(p_loop, extra):
+			global grads
 			new_params, new_opt_state = p_loop
-			grads, _ = grad_fun(new_params, xnext, x, u, extra_args, pen_eq_k, pen_ineq_sq_k, lagr_eq_k, lagr_ineq_k, extra_args_colocation)
+			grads, _ = grad_fun(new_params, xnext, x, u, extra_args, pen_eq_k, pen_ineq_sq_k, lagr_eq_k, lagr_ineq_k, extra_args_colocation, gradient_regularization=gradient_regularization)
 			updates, new_opt_state = optim.update(grads, new_opt_state, new_params)
 			new_params = optax.apply_updates(new_params, updates)
 			return (new_params, new_opt_state), None
@@ -459,3 +499,11 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		return pen_eq_k * beta_eq, pen_ineq_sq_k * beta_ineq, n_lagr_eq_k, n_lagr_ineq_k
 
 	return (params_init, m_pen_eq_k, m_pen_ineq_k, m_lagr_eq_k, m_lagr_ineq_k), pred_xnext, (loss_fun, loss_fun_constr), (update, update_lagrange)
+
+def flatmap_to_matrix(flatmap):
+    if isinstance(flatmap, int):
+        return [flatmap]
+    # Convert FlatMap to a list of arrays
+    array_list = [v for nested_flatmap in flatmap.values() for v in nested_flatmap.values()]
+    print("array list", type(jnp.array(array_list)))
+    return jnp.array(array_list) # TODO: This is inefficient (converting back and forth). Find a way to avoid it.

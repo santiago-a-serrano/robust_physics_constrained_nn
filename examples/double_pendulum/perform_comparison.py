@@ -22,6 +22,9 @@ from tqdm.auto import tqdm
 
 from scipy.io import loadmat
 
+from sympy import symbols, sympify
+
+
 
 def running_mean(x, N):
     cumsum = np.cumsum(np.insert(x, 0, 0, axis=1), axis=1)
@@ -192,6 +195,42 @@ def load_files(data_to_show):
         print(m_llog.sampleLog)
     return m_learning_log, m_util_fun
 
+def get_sindypi_result(starting_point, equations_str):
+    dt = 0.01 # original was 0.01
+    dz = [None] * 5
+    z1, z2, z3, z4 = symbols('z1 z2 z3 z4')
+    lines = equations_str.split('\n')
+    dz[1] = sympify(lines[1].strip())
+    dz[2] = sympify(lines[3].strip())
+    dz[3] = sympify(lines[5].strip())
+    dz[4] = sympify(lines[7].strip())
+    print(dz[1])
+    sindy_pi = np.zeros((100, 4))
+    sindy_pi[0] = starting_point
+    for i in range(1, 100):
+        for z in range(1, 5):
+            sindy_pi[i][z-1] = sindy_pi[i-1][z-1] + dz[z].subs({z1: sindy_pi[i-1][0], z2: sindy_pi[i-1][1], z3: sindy_pi[i-1][2], z4: sindy_pi[i-1][3]}) * dt
+
+    return np.array(sindy_pi)
+
+def plot_squared_errors(time_index, ground_truth, trajectories, colors, labels):
+    plt.figure()
+    plt.title("Squared Errors")
+    for traj_idx, trajectory in enumerate(trajectories):
+        if trajectory is None:
+            continue
+        squared_error = [None] * len(ground_truth)
+        for i in range(len(ground_truth)):
+            squared_error[i] = np.linalg.norm(ground_truth[i] - trajectory[i])
+        plt.plot(time_index, squared_error, 
+                        color=colors[traj_idx], linewidth=linewidth, label=labels[traj_idx])
+        
+    plt.xlabel('Time (s)')
+    plt.ylabel('Squared error')
+    plt.legend()
+    plt.show()
+        # print(f"Argument {arg}: {value}")
+
 
 if __name__ == "__main__":
     import time
@@ -213,7 +252,7 @@ if __name__ == "__main__":
     parser.add_argument('--indx_traj_test', type=int, default=0)
     parser.add_argument('--indx_traj', type=int, default=0)
     parser.add_argument('--train_sindy_path', type=str, default='')
-    parser.add_argument('--sindypi_mat', type=str, default='')
+    parser.add_argument('--sindypi_eqs', type=str, default='')
     parser.add_argument('--use_cached_sindys', type=str, default='')
     parser.add_argument('--gpsindy', type=bool, default=False)
     args = parser.parse_args()
@@ -437,32 +476,40 @@ if __name__ == "__main__":
     m_seed = next(iter(mStateEvol[next(iter(mStateEvol))]))
     print("STARTING POINT: ", true_state_evol[0])
     sindy_result = None
+    sindy_color = 'grey'
     gpsindy_result = None
+    gpsindy_color = 'black'
     sindy_pi_result = None
+    sindy_pi_color = 'purple'
     # JUST USE CACHED SINDYS: --use_cached_sindys string
     # GENERATE THE CACHED SINDYS: --train_sindy_path string
-    if args.train_sindy_path is not '':
+    if args.train_sindy_path != '':
             try:
                 sindy_result = SINDy(args.train_sindy_path).predict(true_state_evol[0], 100)
-                np.save('{args.train_sindy_path}_sindy_cache.npy', sindy_result)
+                np.save(f'{args.train_sindy_path}_sindy_cache.npy', sindy_result)
             except:
                 pass
     if args.gpsindy:
             try:
                 gpsindy_result = SINDy(args.train_sindy_path, gpsindy=True).predict(true_state_evol[0], 100)
-                np.save('{args.train_sindy_path}_gpsindy_cache.npy', gpsindy_result)
+                np.save(f'{args.train_sindy_path}_gpsindy_cache.npy', gpsindy_result)
             except:
                 pass
-    if args.sindypi_mat is not '':
-            mat_file = loadmat(args.sindypi_mat)
+    if args.sindypi_eqs != '':
+            try:
+                with open(args.sindypi_eqs, 'r') as file:
+                    eqs_string = file.read()
+                    sindy_pi_result = get_sindypi_result(true_state_evol[0], eqs_string)
+            except IOError:
+                print("File not accessible")
             
-    if args.use_cached_sindys is not '':
+    if args.use_cached_sindys != '':
         try:
-            sindy_result = np.load('{args.use_cached_sindys}_sindy_cache.npy')
+            sindy_result = np.load(f'{args.use_cached_sindys}_sindy_cache.npy')
         except:
             pass
         try:
-            gpsindy_result = np.load('{args.use_cached_sindys}_gpsindy_cache.npy')
+            gpsindy_result = np.load(f'{args.use_cached_sindys}_gpsindy_cache.npy')
         except:
             pass
     for i in range(len(state_name)):
@@ -470,19 +517,25 @@ if __name__ == "__main__":
         plt.plot(time_index, true_state_evol[:, i], color='green',
                  linewidth=linewidth, linestyle='dashed', label='True state')
         for legend, color in zip(args.legends, args.colors):
-            plt.plot(time_index, np.array(mStateEvol[legend][m_seed])[ # TODO: This is what is actually being plotted
+            plt.plot(time_index, np.array(mStateEvol[legend][m_seed])[
                      :, i], color=color, linewidth=linewidth, label=legend)
         # If available, plot the SINDy simulation too
-        if sindy_result != None:
+        if sindy_result is not None:
             try:
                 plt.plot(time_index, sindy_result[:, i], 
-                        color='grey', linewidth=linewidth, label='SINDy')
+                        color=sindy_color, linewidth=linewidth, label='SINDy')
             except:
                 pass
-        if gpsindy_result != None:
+        if gpsindy_result is not None:
             try:
                 plt.plot(time_index, gpsindy_result[:, i],
-                        color='black', linewidth=linewidth, label='GPSINDy')
+                        color=gpsindy_color, linewidth=linewidth, label='GPSINDy')
+            except:
+                pass
+        if sindy_pi_result is not None:
+            try:
+                plt.plot(time_index, sindy_pi_result[:, i],
+                        color=sindy_pi_color, linewidth=linewidth, label='SINDy-PI')
             except:
                 pass
         plt.xlabel('Time (s)')
@@ -496,6 +549,26 @@ if __name__ == "__main__":
         print(m_seed)
     plt.show()
 
+    # Plot the squared errors of the argument and benchmark trajectories
+    trajectories = []
+    colors = []
+    legends = []
+    for legend, color in zip(args.legends, args.colors):
+            trajectories.append(np.array(mStateEvol[legend][m_seed]))
+            colors.append(color)
+            legends.append(legend)
 
-def plot_sme(ground_truth, **kwargs):
-    pass
+    trajectories.append(sindy_result)
+    colors.append(sindy_color)
+    legends.append('SINDy')
+    trajectories.append(gpsindy_result)
+    colors.append(gpsindy_color)
+    legends.append('GPSINDy')
+    trajectories.append(sindy_pi_result)
+    colors.append(sindy_pi_color)
+    legends.append('SINDy-PI')
+
+                    
+    plot_squared_errors(time_index, true_state_evol, trajectories, colors, legends)
+
+

@@ -19,34 +19,34 @@ xtick style={color=black},
 y grid style={darkgray176},
 ylabel={\(\displaystyle \mathrm{Geometric \ mean \ of \ relative \ error }\)},
 ymajorgrids,
-ymin=0.0350511065421426, ymax=0.293015669877315,
+ymin=0.0260468415425964, ymax=0.466377451244302,
 ymode=log,
 ytick style={color=black}
 ]
 \path [fill=orange, fill opacity=0.4, semithick]
-(axis cs:1,0.26605606234212)
---(axis cs:1,0.240727276762626)
---(axis cs:5,0.0658014912992053)
---(axis cs:10,0.0544682925506455)
---(axis cs:20,0.0388825584417145)
---(axis cs:100,0.0386028544998168)
---(axis cs:100,0.048349143793224)
---(axis cs:100,0.048349143793224)
---(axis cs:20,0.0538276158771443)
---(axis cs:10,0.0604246531194488)
---(axis cs:5,0.0811416705153856)
---(axis cs:1,0.26605606234212)
+(axis cs:1,0.409056968724872)
+--(axis cs:1,0.376589402124321)
+--(axis cs:5,0.125902384109127)
+--(axis cs:10,0.0607804138457918)
+--(axis cs:20,0.0522579528563048)
+--(axis cs:100,0.0296967427531365)
+--(axis cs:100,0.0379157280727796)
+--(axis cs:100,0.0379157280727796)
+--(axis cs:20,0.073374207130092)
+--(axis cs:10,0.0714742460827114)
+--(axis cs:5,0.142441339175987)
+--(axis cs:1,0.409056968724872)
 --cycle;
 
 \addplot [semithick, orange, mark=asterisk, mark size=4, mark options={solid}]
 table {%
-1 0.253391683101654
-5 0.0734715834259987
-10 0.057446476072073
-20 0.0463550873100758
-100 0.0434760041534901
+1 0.392823219299316
+5 0.13417187333107
+10 0.066127322614193
+20 0.0628160759806633
+100 0.0338062383234501
 };
-\addlegendentry{With best GP Denoising}
+\addlegendentry{With best GP denoising}
 \end{axis}
 
 \end{tikzpicture}

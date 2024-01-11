@@ -271,6 +271,7 @@ def main_fn(path_config_file, extra_args={}):
     # Print the sample log info
     print("###### SampleLog ######")
     print(reducedSampleLog)
+    print("GRADIENT REGULARIZATION ENABLED?", gradient_regularization)
 
     # Training data
     xTrainList = np.asarray(mSampleLog.xTrain)
@@ -365,26 +366,28 @@ def main_fn(path_config_file, extra_args={}):
                 batch_coloc = coloc_set[idx_coloc_train]
 
                 # Update the parameters of the NN and the state of the optimizer
-                params, opt_state = update(params, opt_state, xTrainNext, xTrain, pen_eq_k=m_pen_eq_k, pen_ineq_sq_k=m_pen_ineq_k,
+                params, opt_state, grads = update(params, opt_state, xTrainNext, xTrain, pen_eq_k=m_pen_eq_k, pen_ineq_sq_k=m_pen_ineq_k,
                                            lagr_eq_k=m_lagr_eq_k if m_lagr_eq_k.shape[
                                                0] <= 0 else m_lagr_eq_k[idx_coloc_train],
                                            lagr_ineq_k=m_lagr_ineq_k if m_lagr_ineq_k.shape[
                                                0] <= 0 else m_lagr_ineq_k[idx_coloc_train],
                                            extra_args_colocation=(batch_coloc, None, None))
+                
+                # since our noise will be 4 values (four relevant variables), (sqrt(4x^2)) = 2x (if x is positive), we're getting l2 norm
+                little_sigma = default_sigma_n * 2
 
-                # If it is time to evaluate the models do it
                 if update_freq[number_inner_iteration]:
                     if not train_with_constraints:  # In case there is no constraints -> Try to also log the constraints incurred by the current neural structure
                         loss_tr, (spec_data_tr, coloc_ctr) = loss_fun_constr(
-                            params, xTrainNext, xTrain,  gradient_regularization=gradient_regularization)
+                            params, xTrainNext, xTrain, gradient_regularization=gradient_regularization, sigma_noise_norm=little_sigma, grads=grads)
                         loss_te, (spec_data_te, coloc_cte) = loss_fun_constr(
-                            params, xTestNext, xTest, extra_args_colocation=(coloc_set, None, None), gradient_regularization=gradient_regularization)
+                            params, xTestNext, xTest, extra_args_colocation=(coloc_set, None, None), gradient_regularization=gradient_regularization, sigma_noise_norm=little_sigma, grads=grads)
                     else:
                         loss_tr, (spec_data_tr, coloc_ctr) = loss_fun(
-                            params, xTrainNext, xTrain, gradient_regularization=gradient_regularization)
+                            params, xTrainNext, xTrain, gradient_regularization=gradient_regularization, sigma_noise_norm=little_sigma, grads=grads)
                         loss_te, (spec_data_te, coloc_cte) = loss_fun(params, xTestNext, xTest, pen_eq_k=m_pen_eq_k, pen_ineq_sq_k=m_pen_ineq_k,
                                                                       lagr_eq_k=m_lagr_eq_k, lagr_ineq_k=m_lagr_ineq_k,
-                                                                      extra_args_colocation=(coloc_set, None, None), gradient_regularization=gradient_regularization)
+                                                                      extra_args_colocation=(coloc_set, None, None), gradient_regularization=gradient_regularization, sigma_noise_norm=little_sigma, grads=grads)
 
                     # Log the value obtained by evaluating the current model
                     dict_loss['total_loss_train'].append(float(loss_tr))

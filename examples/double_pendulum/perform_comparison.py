@@ -195,23 +195,43 @@ def load_files(data_to_show):
         print(m_llog.sampleLog)
     return m_learning_log, m_util_fun
 
-def get_sindypi_result(starting_point, equations_str):
-    dt = 0.01 # original was 0.01
-    dz = [None] * 5
-    z1, z2, z3, z4 = symbols('z1 z2 z3 z4')
-    lines = equations_str.split('\n')
-    dz[1] = sympify(lines[1].strip())
-    dz[2] = sympify(lines[3].strip())
-    dz[3] = sympify(lines[5].strip())
-    dz[4] = sympify(lines[7].strip())
-    print(dz[1])
-    sindy_pi = np.zeros((100, 4))
-    sindy_pi[0] = starting_point
-    for i in range(1, 100):
-        for z in range(1, 5):
-            sindy_pi[i][z-1] = sindy_pi[i-1][z-1] + dz[z].subs({z1: sindy_pi[i-1][0], z2: sindy_pi[i-1][1], z3: sindy_pi[i-1][2], z4: sindy_pi[i-1][3]}) * dt
+from sympy import lambdify
 
-    return np.array(sindy_pi)
+import numpy as np
+from scipy.integrate import solve_ivp
+from sympy import symbols, sympify, lambdify
+
+import numpy as np
+from scipy.integrate import solve_ivp
+from sympy import symbols, sympify, lambdify
+
+def get_sindypi_result(starting_point, equations_str, dt=0.01, steps=100):
+    # Initialize the derivatives list
+    z1, z2, z3, z4 = symbols('z1 z2 z3 z4')
+    
+    # Parse the equations from the input string
+    lines = equations_str.split('\n')
+    dz = [sympify(lines[i].strip()) for i in range(1, len(lines), 2) if lines[i].strip()]
+    
+    # Ensure we have 4 equations
+    if len(dz) != 4:
+        raise ValueError("There must be exactly 4 equations, one for each derivative dz1, dz2, dz3, and dz4.")
+    
+    # Convert symbolic expressions to numerical functions
+    dz_funcs = [lambdify((z1, z2, z3, z4), expr) for expr in dz]
+    
+    # Define a function that returns the derivatives
+    def odes(t, y):
+        return [func(*y) for func in dz_funcs]
+    
+    # Set up the time span and initial conditions
+    t_span = (0, dt * steps)
+    t_eval = np.linspace(t_span[0], t_span[1], steps)
+    
+    # Solve the ODE using Runge-Kutta 45
+    solution = solve_ivp(odes, t_span, starting_point, method='RK45', t_eval=t_eval)
+    
+    return solution.y.T
 
 def plot_squared_errors(time_index, ground_truth, trajectories, colors, labels):
     plt.figure()

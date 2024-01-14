@@ -1,6 +1,7 @@
 # Jax imports
 import jax
 import jax.numpy as jnp
+from jax import vmap
 
 # Haiku for Neural networks
 import haiku as hk
@@ -13,8 +14,6 @@ from physics_constrained_nn.noise_generator import add_gaussian_noise_tuple
 # Typing functions
 from typing import Optional, Tuple
 
-# TODO: Maybe there's a smarter way of accessing the gradient in the loss function than putting this here
-grads = 0
 
 # Physics-based neural networks
 class PhyConstrainedNets(hk.Module):
@@ -307,7 +306,8 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 					extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
 					gradient_regularization=False,
 					sigma_noise_norm=0.2,
-					dual_of_p=2):
+					dual_of_p=2,
+					grads=0):
 		""" Compute the loss function given the current parameters of the custom neural network
 			:param params 		: Weights of all the neural networks
 			:param xnext 		: The target netx state used in the mean squared product
@@ -365,19 +365,27 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 						(0.0 if ineqCterms.shape[0] <=0 else (jnp.sum(lagr_ineq_k * ineqCterms) / ineqCterms.size))
 		
 		loss_of_x = (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss + coloc_cost
-		
+	
+		# Compute the gradient of the loss with respect to the inputs
+		grad_loss_wrt_inputs = jax.grad(lambda x: jnp.sum((pred_xnext(params, x, u, extra_args)[0] - xnext) ** 2))(x)
+		mean_grad_loss_wrt_inputs = jnp.mean(grad_loss_wrt_inputs, axis=0)
 
-		# global grads
-		# converted_grads = flatmap_to_matrix(grads)
-		# print("loss of x", loss_of_x)
-		# converted_loss_of_x = jax.device_get(loss_of_x.primal)
-		# print("converted loss of x", converted_loss_of_x)
-		# grad_reg = jax.lax.cond(gradient_regularization,
-        #                 lambda _: sigma_noise_norm * jnp.linalg.norm(converted_grads * converted_loss_of_x),
-        #                 lambda _: 0.0,
-        #                 None)
-		
-		grad_reg = 0
+		# Define a function that computes the Hessian for a single data point
+		def single_point_hessian(x):
+			return jax.hessian(lambda x: jnp.sum((pred_xnext(params, x[None, :], u, extra_args)[0] - xnext) ** 2))(x)
+
+		# Vectorize the function
+		batch_hessian = vmap(single_point_hessian)
+
+		# Compute the Hessian for the whole batch
+		hessian_loss_wrt_inputs = batch_hessian(x)
+		mean_hessian_loss_wrt_inputs = jnp.mean(hessian_loss_wrt_inputs, axis=0)
+
+		# Compute the gradient regularization term
+		grad_reg = jax.lax.cond(gradient_regularization,
+                        lambda _: sigma_noise_norm * jnp.linalg.norm(mean_grad_loss_wrt_inputs) + 0.5*(sigma_noise_norm**2)*jnp.trace(mean_hessian_loss_wrt_inputs),
+                        lambda _: 0.0,
+                        None)
 
 		# Return the composite
 		return loss_of_x + grad_reg, (m_res, jnp.array([coloc_cost, cTerm_eq, cTerm_ineq]))
@@ -387,7 +395,8 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 							extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
 							gradient_regularization=False,
 							sigma_noise_norm=0.2,
-							dual_of_p=2):
+							dual_of_p=2,
+							grads=0):
 		""" Compute the loss function given the current parameters of the custom neural network
 			:param params 		: Weights of all the neural networks
 			:param xnext 		: The target netx state used in the mean squared product
@@ -430,20 +439,30 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		cTerm_ineq = 0.0 if ineqCterms.shape[0] <= 0 else (jnp.sum(jnp.where(ineqCterms > 0, 1.0, 0.0) * jnp.square(ineqCterms)) /  ineqCterms.size)
 
 		loss_of_x = (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss
+	
+		# Compute the gradient of the loss with respect to the inputs
+		grad_loss_wrt_inputs = jax.grad(lambda x: jnp.sum((pred_xnext(params, x, u, extra_args)[0] - xnext) ** 2))(x)
+		mean_grad_loss_wrt_inputs = jnp.mean(grad_loss_wrt_inputs, axis=0)
 
-		# global grads
-		# converted_loss_of_x = jax.device_get(loss_of_x.primal)
-		# converted_grads = flatmap_to_matrix(grads)
-		# print("loss of x", loss_of_x)
-		# print("converted loss of x", converted_loss_of_x)
-		# grad_reg = jax.lax.cond(gradient_regularization,
-        #                 lambda _: sigma_noise_norm * jnp.linalg.norm(converted_grads * converted_loss_of_x),
-        #                 lambda _: 0.0,
-        #                 None)
+		# Define a function that computes the Hessian for a single data point
+		def single_point_hessian(x):
+			return jax.hessian(lambda x: jnp.sum((pred_xnext(params, x[None, :], u, extra_args)[0] - xnext) ** 2))(x)
 
-		grad_reg = 0
+		# Vectorize the function
+		batch_hessian = vmap(single_point_hessian)
+
+		# Compute the Hessian for the whole batch
+		hessian_loss_wrt_inputs = batch_hessian(x)
+		mean_hessian_loss_wrt_inputs = jnp.mean(hessian_loss_wrt_inputs, axis=0)
+		
+		grad_reg = jax.lax.cond(gradient_regularization,
+                        lambda _: sigma_noise_norm * jnp.linalg.norm(mean_grad_loss_wrt_inputs) + 0.5*(sigma_noise_norm**2)*jnp.trace(mean_hessian_loss_wrt_inputs),
+                        lambda _: 0.0,
+                        None)
 
 		return loss_of_x + grad_reg, (m_res, jnp.array([1e-15, cTerm_eq, cTerm_ineq]))
+
+
 
 	# Define the update step
 	def update(params: hk.Params, opt_state: optax.OptState, xnext : jnp.ndarray, x: jnp.ndarray, u : Optional[jnp.ndarray] = None, 
@@ -453,7 +472,7 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 				lagr_ineq_k : Optional[jnp.ndarray] = jnp.array([]),
 				extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
 				n_iter : int = 1,
-				gradient_regularization=False) -> Tuple[hk.Params, optax.OptState]:
+				gradient_regularization=False) -> Tuple[hk.Params, optax.OptState, any]:
 		"""Update the parameters of the neural netowkrs via one of the gradient descent optimizer
 			:param params 		: The current weight of the neural network
 			:param opt_state 	: The current state of the optimizer
@@ -468,15 +487,15 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 			:param n_iter 		: Number of iteration for each update
 			... 				: similar aruguments related to colocationa as the loss function
 		"""
-		grad_fun = jax.grad(loss_fun, has_aux=True)
+		grad_fun = jax.value_and_grad(loss_fun, has_aux=True)
 		def loop_fun_val(p_loop, extra):
-			global grads
 			new_params, new_opt_state = p_loop
-			grads, _ = grad_fun(new_params, xnext, x, u, extra_args, pen_eq_k, pen_ineq_sq_k, lagr_eq_k, lagr_ineq_k, extra_args_colocation, gradient_regularization=gradient_regularization)
+			(loss, aux), grads = grad_fun(new_params, xnext, x, u, extra_args, pen_eq_k, pen_ineq_sq_k, lagr_eq_k, lagr_ineq_k, extra_args_colocation, gradient_regularization=gradient_regularization)
 			updates, new_opt_state = optim.update(grads, new_opt_state, new_params)
 			new_params = optax.apply_updates(new_params, updates)
-			return (new_params, new_opt_state), None
-		return jax.lax.scan(loop_fun_val, (params, opt_state), None, length=n_iter)[0]
+			return (new_params, new_opt_state), grads
+		(params, opt_state), grads = jax.lax.scan(loop_fun_val, (params, opt_state), None, length=n_iter)
+		return params, opt_state, grads
 
 	# Define the update step for the lagrangier multipliers term
 	def update_lagrange(params, pen_eq_k : Optional[float] = 0, pen_ineq_sq_k: Optional[float] = 0.0, 
@@ -503,7 +522,8 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 def flatmap_to_matrix(flatmap):
     if isinstance(flatmap, int):
         return [flatmap]
+    print(flatmap)
     # Convert FlatMap to a list of arrays
-    array_list = [v for nested_flatmap in flatmap.values() for v in nested_flatmap.values()]
+    array_list = [v for nested_flatmap in flatmap.values() for v in nested_flatmap]
     print("array list", type(jnp.array(array_list)))
     return jnp.array(array_list) # TODO: This is inefficient (converting back and forth). Find a way to avoid it.

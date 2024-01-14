@@ -20,10 +20,10 @@ optimize_hyperparams: False
 big_denoising: False
 # The sigma_n (noise) that will be used for denoising if the hyperparameters are not optimized (optimize_hyperparams: False)
 # The double of this value will be used as the maximum noise expected if gradient_regularization is set to true. we get the double so that noise for 95% of data is less or equal
-default_sigma_n: 0.05
+default_sigma_n: 0.01
 
 # Choose if adapt the loss function in order to do gradient regularization
-gradient_regularization: False
+gradient_regularization: True
 
 # The file that contains the training and testing dataset
 train_data_file: ./data/datatrain_dt0p01.pkl

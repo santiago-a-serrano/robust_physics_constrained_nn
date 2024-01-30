@@ -3,6 +3,7 @@
 
 \definecolor{darkgray176}{RGB}{176,176,176}
 \definecolor{darkorange}{RGB}{255,140,0}
+\definecolor{darkred}{RGB}{139,0,0}
 \definecolor{lightgray204}{RGB}{204,204,204}
 \definecolor{orange}{RGB}{255,165,0}
 
@@ -15,16 +16,41 @@ tick align=outside,
 tick pos=left,
 x grid style={darkgray176},
 xlabel={\(\displaystyle \mathrm{Time \ steps}\)},
-xmajorgrids,
 xmin=-775, xmax=16275,
 xtick style={color=black},
 xticklabels={},
 y grid style={darkgray176},
 ylabel={\(\displaystyle \mathrm{Total \ loss}\) (\(\displaystyle N_{\mathrm{train}}=1\))},
-ymajorgrids,
-ymin=0.000559886297560297, ymax=0.00456911288492847,
+ymin=0.000554283279343508, ymax=0.00468677626748104,
 ytick style={color=black}
 ]
+\path [fill=red, fill opacity=0.2, semithick]
+(axis cs:0,0.00449893567711115)
+--(axis cs:0,0.00415976122021675)
+--(axis cs:100,0.00328176445327699)
+--(axis cs:200,0.00263209664262831)
+--(axis cs:300,0.00242556156590581)
+--(axis cs:400,0.00249150628224015)
+--(axis cs:500,0.00256031076423824)
+--(axis cs:600,0.00268062059767544)
+--(axis cs:700,0.00282481880858541)
+--(axis cs:800,0.00304022268392146)
+--(axis cs:900,0.00333846928551793)
+--(axis cs:1000,0.00373433735221624)
+--(axis cs:1000,0.00424907417036593)
+--(axis cs:1000,0.00424907417036593)
+--(axis cs:900,0.00383084043860435)
+--(axis cs:800,0.00349805830046535)
+--(axis cs:700,0.00325161810033023)
+--(axis cs:600,0.00304876971058547)
+--(axis cs:500,0.00289298500865698)
+--(axis cs:400,0.00283128852024674)
+--(axis cs:300,0.00276258853264153)
+--(axis cs:200,0.00305517641827464)
+--(axis cs:100,0.00369241735897958)
+--(axis cs:0,0.00449893567711115)
+--cycle;
+
 \path [fill=orange, fill opacity=0.2, semithick]
 (axis cs:0,0.00438687531277537)
 --(axis cs:0,0.00407329550944269)
@@ -342,6 +368,21 @@ ytick style={color=black}
 --(axis cs:0,0.00438687531277537)
 --cycle;
 
+\addplot [semithick, darkred, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00432932376861572
+100 0.00348711013793945
+200 0.00284361839294434
+300 0.00259411334991455
+400 0.00266134738922119
+500 0.00272667407989502
+600 0.00286471843719482
+700 0.00303816795349121
+800 0.00326919555664062
+900 0.00358462333679199
+1000 0.00399172306060791
+};
+\addlegendentry{No GP}
 \addplot [semithick, darkorange, dash pattern=on 10pt off 5pt]
 table {%
 0 0.00423014163970947
@@ -456,7 +497,7 @@ table {%
 15300 0.000804662704467773
 15500 0.000805258750915527
 };
-\addlegendentry{With best GP denoising}
+\addlegendentry{With GP}
 
 \nextgroupplot[
 legend cell align={left},
@@ -467,17 +508,42 @@ tick align=outside,
 tick pos=left,
 x grid style={darkgray176},
 xlabel={\(\displaystyle \mathrm{Time \ steps}\)},
-xmajorgrids,
 xmin=-775, xmax=16275,
 xtick style={color=black},
 xticklabels={},
 y grid style={darkgray176},
 ylabel={\(\displaystyle \mathrm{Mean \ squared \ loss}\) (\(\displaystyle N_{\mathrm{train}}=1\))},
-ymajorgrids,
-ymin=0.000679034176524679, ymax=0.00479445530515861,
+ymin=0.000678178333019635, ymax=0.00492313170769276,
 ymode=log,
 ytick style={color=black}
 ]
+\path [fill=red, fill opacity=0.4, semithick]
+(axis cs:0,0.00449893530458212)
+--(axis cs:0,0.00415976066142321)
+--(axis cs:100,0.00328176422044635)
+--(axis cs:200,0.00263209640979767)
+--(axis cs:300,0.00242556142620742)
+--(axis cs:400,0.00249150628224015)
+--(axis cs:500,0.00256031122989953)
+--(axis cs:600,0.00268062064424157)
+--(axis cs:700,0.00282481871545315)
+--(axis cs:800,0.00304022245109081)
+--(axis cs:900,0.00333846919238567)
+--(axis cs:1000,0.00373433670029044)
+--(axis cs:1000,0.00424907496199012)
+--(axis cs:1000,0.00424907496199012)
+--(axis cs:900,0.00383084127679467)
+--(axis cs:800,0.00349805830046535)
+--(axis cs:700,0.00325161847285926)
+--(axis cs:600,0.00304877012968063)
+--(axis cs:500,0.00289298524148762)
+--(axis cs:400,0.00283128814771771)
+--(axis cs:300,0.00276258890517056)
+--(axis cs:200,0.00305517646484077)
+--(axis cs:100,0.00369241693988442)
+--(axis cs:0,0.00449893530458212)
+--cycle;
+
 \path [fill=orange, fill opacity=0.4, semithick]
 (axis cs:0,0.00438687531277537)
 --(axis cs:0,0.00407329527661204)
@@ -795,6 +861,21 @@ ytick style={color=black}
 --(axis cs:0,0.00438687531277537)
 --cycle;
 
+\addplot [semithick, darkred, dash pattern=on 10pt off 5pt]
+table {%
+0 0.00432934705168009
+100 0.00348709127865732
+200 0.00284363678656518
+300 0.00259407563135028
+400 0.00266139674931765
+500 0.00272664823569357
+600 0.0028646953869611
+700 0.00303821871057153
+800 0.00326914084143937
+900 0.00358465546742082
+1000 0.00399170676246285
+};
+\addlegendentry{No GP}
 \addplot [semithick, darkorange, dash pattern=on 10pt off 5pt]
 table {%
 0 0.00423008622601628
@@ -940,7 +1021,7 @@ table {%
 15400 0.00080467778025195
 15500 0.00080522132338956
 };
-\addlegendentry{With best GP denoising}
+\addlegendentry{With GP}
 
 \nextgroupplot[
 tick align=outside,

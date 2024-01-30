@@ -1,9 +1,10 @@
 % This file was created with tikzplotlib v0.10.1.
 \begin{tikzpicture}
 
-\definecolor{cyan}{RGB}{0,255,255}
 \definecolor{darkgray176}{RGB}{176,176,176}
 \definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{magenta}{RGB}{255,0,255}
+\definecolor{orange}{RGB}{255,165,0}
 
 \begin{axis}[
 legend cell align={left},
@@ -26,10 +27,40 @@ xtick style={color=black},
 y grid style={darkgray176},
 ylabel={\(\displaystyle \mathrm{Geometric \ mean \ of \ relative \ error }\)},
 ymajorgrids,
-ymin=0.411415953067569, ymax=0.798700394726492,
+ymin=0.024623787985467, ymax=0.662284932223846,
 ymode=log,
 ytick style={color=black}
 ]
+\path [fill=orange, fill opacity=0.4, semithick]
+(axis cs:1,0.490901413014269)
+--(axis cs:1,0.433024493967871)
+--(axis cs:5,0.116525049895157)
+--(axis cs:10,0.0790341389402467)
+--(axis cs:20,0.0626124885872948)
+--(axis cs:100,0.0285983365540995)
+--(axis cs:100,0.0545071173413951)
+--(axis cs:100,0.0545071173413951)
+--(axis cs:20,0.109669975571805)
+--(axis cs:10,0.108153574993502)
+--(axis cs:5,0.148462798747811)
+--(axis cs:1,0.490901413014269)
+--cycle;
+
+\path [fill=magenta, fill opacity=0.4, semithick]
+(axis cs:1,0.570241689624135)
+--(axis cs:1,0.504474483117348)
+--(axis cs:5,0.338357373021068)
+--(axis cs:10,0.288190658397173)
+--(axis cs:20,0.279773229275691)
+--(axis cs:100,0.348821336887377)
+--(axis cs:100,0.388578507231413)
+--(axis cs:100,0.388578507231413)
+--(axis cs:20,0.338310911935988)
+--(axis cs:10,0.389291486552578)
+--(axis cs:5,0.367432942562177)
+--(axis cs:1,0.570241689624135)
+--cycle;
+
 \path [fill=red, fill opacity=0.4, semithick]
 (axis cs:1,0.555993498565384)
 --(axis cs:1,0.501879393177072)
@@ -45,36 +76,24 @@ ytick style={color=black}
 --(axis cs:1,0.555993498565384)
 --cycle;
 
-\path [fill=blue, fill opacity=0.4, semithick]
-(axis cs:1,0.715462967849881)
---(axis cs:1,0.698586307564763)
---(axis cs:5,0.698653532882175)
---(axis cs:10,0.698604340855921)
---(axis cs:20,0.698609807041718)
---(axis cs:100,0.698609790972751)
---(axis cs:100,0.715482804350784)
---(axis cs:100,0.715482804350784)
---(axis cs:20,0.715477518888206)
---(axis cs:10,0.715476920327181)
---(axis cs:5,0.715515123005459)
---(axis cs:1,0.715462967849881)
---cycle;
-
-\path [fill=cyan, fill opacity=0.4, semithick]
-(axis cs:1,0.774976116665534)
---(axis cs:1,0.503993916664347)
---(axis cs:5,0.509421279706893)
---(axis cs:10,0.476063680018315)
---(axis cs:20,0.536065250368833)
---(axis cs:100,0.590051996641826)
---(axis cs:100,0.704333402586261)
---(axis cs:100,0.704333402586261)
---(axis cs:20,0.704059881203427)
---(axis cs:10,0.520459456282306)
---(axis cs:5,0.550431317674909)
---(axis cs:1,0.774976116665534)
---cycle;
-
+\addplot [semithick, orange, mark=asterisk, mark size=4, mark options={solid}]
+table {%
+1 0.461962968111038
+5 0.132493928074837
+10 0.0935938507318497
+20 0.0861412286758423
+100 0.0415527261793613
+};
+\addlegendentry{0.01 noise}
+\addplot [semithick, magenta, mark=asterisk, mark size=4, mark options={solid}]
+table {%
+1 0.537358164787292
+5 0.352895140647888
+10 0.338741093873978
+20 0.309042096138
+100 0.368699908256531
+};
+\addlegendentry{0.05 noise}
 \addplot [semithick, red, mark=asterisk, mark size=4, mark options={solid}]
 table {%
 1 0.528936386108398
@@ -83,25 +102,7 @@ table {%
 20 0.492589980363846
 100 0.485676795244217
 };
-\addlegendentry{No grad. reg.}
-\addplot [semithick, blue, mark=asterisk, mark size=4, mark options={solid}]
-table {%
-1 0.707024574279785
-5 0.70708429813385
-10 0.707040667533875
-20 0.707043588161469
-100 0.707046270370483
-};
-\addlegendentry{Grad. reg}
-\addplot [semithick, cyan, mark=asterisk, mark size=4, mark options={solid}]
-table {%
-1 0.639485001564026
-5 0.529926359653473
-10 0.498261630535126
-20 0.620062589645386
-100 0.647192716598511
-};
-\addlegendentry{Second grad. reg}
+\addlegendentry{0.1 noise}
 \end{axis}
 
 \end{tikzpicture}

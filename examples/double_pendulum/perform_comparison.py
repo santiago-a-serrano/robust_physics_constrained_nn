@@ -145,9 +145,11 @@ def generate_rel_error(util_fun, params, xtrue, indx_traj=0):
     for seed, params_val in sorted(params.items()):
         # The initial point are all initial point in the given trajectories
         init_value = xtrue[:, 0, :]
+        print("init_value", init_value)
         # Then we estimate the future time step
         for i, l_res_value in tqdm(zip(range(1, xtrue.shape[1]), res_value), total=len(res_value), leave=False):
             init_value, _, _, _, _, _ = pred_xnext(params_val, init_value)
+            # the parameters -> print("params_val", params_val)
             trajectory_evolution[seed].append(init_value[indx_traj, :])
             # Compute the relative error
             curr_relative_error = np.linalg.norm(init_value-xtrue[:, i, :], axis=1)/(
@@ -233,7 +235,9 @@ def get_sindypi_result(starting_point, equations_str, dt=0.01, steps=100):
     
     return solution.y.T
 
+# TODO: Do they count as squared errors? It's the norm of the errors
 def plot_squared_errors(time_index, ground_truth, trajectories, colors, labels):
+    # Just the squared errors:
     plt.figure()
     plt.title("Squared Errors")
     for traj_idx, trajectory in enumerate(trajectories):
@@ -249,7 +253,25 @@ def plot_squared_errors(time_index, ground_truth, trajectories, colors, labels):
     plt.ylabel('Squared error')
     plt.legend()
     plt.show()
-        # print(f"Argument {arg}: {value}")
+    
+
+    # The accumulated squared errors:
+    plt.figure()
+    plt.title("Accumulated Squared Errors")
+    for traj_idx, trajectory in enumerate(trajectories):
+        if trajectory is None:
+            continue
+        squared_error = [None] * len(ground_truth)
+        squared_error[0] = np.linalg.norm(ground_truth[0] - trajectory[0])
+        for i in range(1, len(ground_truth)):
+            squared_error[i] = np.linalg.norm(ground_truth[i] - trajectory[i]) + squared_error[i-1]
+        plt.plot(time_index, squared_error, 
+                        color=colors[traj_idx], linewidth=linewidth, label=labels[traj_idx])
+        
+    plt.xlabel('Time (s)')
+    plt.ylabel('Accumulated squared error')
+    plt.legend()
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -402,6 +424,7 @@ if __name__ == "__main__":
         jax.random.uniform(subkey, shape=(n_state,),
                            minval=0, maxval=args.noise)
     # Define a rule for generating trajectories for evaluation the realative error
+    # testTraj contains num_traj trajectories
     m_rng, testTraj, _ = gen_samples(
         m_rng, actual_dt, args.num_traj, args.num_point_in_traj, 1, x_init_lb, x_init_ub, merge_traj=False)
     time_index = [actual_dt * i for i in range(1, args.num_point_in_traj)]
@@ -490,7 +513,7 @@ if __name__ == "__main__":
 
     # Plot the state evolution to show the accuracy
     # Plot the trajectories
-    state_name = [r'$\Theta_1$', r'$\Theta_2$', r'$w\Omega1$', r'$\Omega_2$']
+    state_name = [r'$\Theta_1$', r'$\Theta_2$', r'$\Omega_1$', r'$\Omega_2$']
     time_index = [actual_dt * i for i in range(args.num_point_in_traj)]
     true_state_evol = testTraj[args.indx_traj_test]
     m_seed = next(iter(mStateEvol[next(iter(mStateEvol))]))

@@ -173,7 +173,7 @@ class PhyConstrainedNets(hk.Module):
 			print("There are constraints")
 		
 		key = jax.random.PRNGKey(0)
-		print(constraint_noise)
+		# print(constraint_noise)
 		if constraint_noise > 0.00001:
 			return add_gaussian_noise_tuple(key, constraints, constraint_noise)
 		else:
@@ -211,7 +211,7 @@ class PhyConstrainedNets(hk.Module):
 def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, ncontrol, nn_params, ODESolver, 
 								known_dynamics=None, constraints_dynamics=None, pen_l2=1e-4, pen_constr={}, 
 								batch_size=1, extra_args_init=None, train_with_constraints = False, normalize=True,
-								constraint_noise=0, seed=0):
+								constraint_noise=0, grad_reg=False, max_noise_norm=0.2, seed=0):
 	""" This function builds a neural network to estimate future state values while encoding side information about 
 		the dynamics. Specifically, it returns a function to estimate next state and a function to update the network parameters.
 		:param rng_key 					: A key for random initialization of the parameters of the neural networs
@@ -297,29 +297,13 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 	pred_xnext = pred_fn_pure.apply
 	pred_xnext_constr = pred_next_state_constr_pure.apply
 
-	# Then define a function to compute the loss function needed to train the model
-	def loss_fun(params : hk.Params, xnext : jnp.ndarray, x : jnp.ndarray, u : Optional[jnp.ndarray] = None, 
+	def L(params : hk.Params, xnext : jnp.ndarray, x : jnp.ndarray, u : Optional[jnp.ndarray] = None, 
 					extra_args : Optional[jnp.ndarray] = None, 
 					pen_eq_k : Optional[float] = 0, pen_ineq_sq_k: Optional[float] = 0.0, 
 					lagr_eq_k : Optional[jnp.ndarray] = 0.0,
 					lagr_ineq_k : Optional[jnp.ndarray] = 0.0,
-					extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
-					gradient_regularization=False,
-					sigma_noise_norm=0.2,
-					dual_of_p=2,
-					grads=0):
-		""" Compute the loss function given the current parameters of the custom neural network
-			:param params 		: Weights of all the neural networks
-			:param xnext 		: The target netx state used in the mean squared product
-			:param x 			: The state for which to estimate the next state value
-			:param u 			: The control signal applied at each state x
-			:param extra_args	: State dependent extra parameters used in side information and constraints
-			:param pen_eq_k 	: Penalty coefficient for the equality constraints 
-			:param pen_ineq_sq_k: Penalty coefficient for the inequality constraints Phi(x,u,...) <= 0
-			:param lagr_eq_k 	: Lagrangier multiplier for the equality constraints
-			:param lagr_ineq_k 	: Lagranfier multiplier for the inequality constraints
-			:param extra_args_colocation : Point used in order to enforce the constraints on unlabbelled data
-		"""
+					extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None)):
+		"""Just the loss function itself, but without any gradient regularization or more complex code. See loss_fun."""
 		# assert u is None or x.shape[0]==u.shape[0], 'The (batch size of u) should be equal to (batch size of x)'
 		assert u is None or (u.shape[0] == xnext.shape[0] and len(x.shape) == len(xnext.shape)-1), \
 			'Mismatch ! xnext and u should have one more dimension than x of size roolout'
@@ -364,37 +348,146 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		coloc_cost = pen_eq_k * cTerm_eq + pen_ineq_sq_k * cTerm_ineq + (0.0 if eqCterms.shape[0] <= 0 else (jnp.sum(lagr_eq_k * eqCterms)/eqCterms.size)) + \
 						(0.0 if ineqCterms.shape[0] <=0 else (jnp.sum(lagr_ineq_k * ineqCterms) / ineqCterms.size))
 		
+		return (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss + coloc_cost
+
+	# Then define a function to compute the loss function needed to train the model
+	def loss_fun(params : hk.Params, xnext : jnp.ndarray, x : jnp.ndarray, u : Optional[jnp.ndarray] = None, 
+					extra_args : Optional[jnp.ndarray] = None, 
+					pen_eq_k : Optional[float] = 0, pen_ineq_sq_k: Optional[float] = 0.0, 
+					lagr_eq_k : Optional[jnp.ndarray] = 0.0,
+					lagr_ineq_k : Optional[jnp.ndarray] = 0.0,
+					extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
+					dual_of_p=2,
+					grads=0):
+		""" Compute the loss function given the current parameters of the custom neural network
+			:param params 		: Weights of all the neural networks
+			:param xnext 		: The target netx state used in the mean squared product
+			:param x 			: The state for which to estimate the next state value
+			:param u 			: The control signal applied at each state x
+			:param extra_args	: State dependent extra parameters used in side information and constraints
+			:param pen_eq_k 	: Penalty coefficient for the equality constraints 
+			:param pen_ineq_sq_k: Penalty coefficient for the inequality constraints Phi(x,u,...) <= 0
+			:param lagr_eq_k 	: Lagrangier multiplier for the equality constraints
+			:param lagr_ineq_k 	: Lagranfier multiplier for the inequality constraints
+			:param extra_args_colocation : Point used in order to enforce the constraints on unlabbelled data
+		"""
+
+		# assert u is None or x.shape[0]==u.shape[0], 'The (batch size of u) should be equal to (batch size of x)'
+		assert u is None or (u.shape[0] == xnext.shape[0] and len(x.shape) == len(xnext.shape)-1), \
+			'Mismatch ! xnext and u should have one more dimension than x of size roolout'
+
+		# Don't compute the L2 norm if the penalization term is zero
+		l2_loss = 0.5 * sum(jnp.sum(jnp.square(p)) for p in jax.tree_leaves(params)) if pen_l2 > 0.0 else 0.0
+
+		# Scan function for rolling out the dynamics
+		def rollout(carry, extra):
+			""" Rollout the computation of the next state
+			"""
+			curr_x, params = carry
+			curr_u, true_nextx = extra
+
+			# Predict the next state, USING THE MODEL.
+			next_x, _, _, _, (eqCterms,_), (ineqCterms,_) = pred_xnext(params, curr_x, curr_u, extra_args)
+
+			# COmpute the cost associated to the constraints
+			cTerm_eq = 0.0 if eqCterms.shape[0] <= 0 else jnp.sum(jnp.square(eqCterms))/ eqCterms.size
+			cTerm_ineq = 0.0 if ineqCterms.shape[0] <= 0 else (jnp.sum(jnp.where(ineqCterms > 0, 1.0, 0.0) * jnp.square(ineqCterms)) /  ineqCterms.size)
+
+			# Measure the mean squared difference
+			meanSquredDiff = jnp.sum(jnp.square(next_x - true_nextx)) / (x.shape[0]*(1 if not normalize else x.shape[-1]))
+
+			# Compute the total loss
+			totalLoss =  meanSquredDiff + pen_eq_k * cTerm_eq + pen_ineq_sq_k * cTerm_ineq
+			return (next_x, params), jnp.array([totalLoss, meanSquredDiff, cTerm_eq, cTerm_ineq])
+
+		# Rollout and compute the rolled out error term
+		_, m_res = jax.lax.scan(rollout, (x, params), (u, xnext))
+
+		# Compute the loss associated to the collocation points 
+		_, _, _, _, (_, eqCterms), (_, ineqCterms) = pred_xnext(params, None, None, None, extra_args_colocation=extra_args_colocation)
+
+		# Check the satisfaction  of equality constraints
+		cTerm_eq = 0.0 if eqCterms.shape[0] <= 0 else jnp.sum(jnp.square(eqCterms))/ eqCterms.size
+
+		# Check the satisfaction of inequality constraints
+		cTerm_ineq = 0.0 if ineqCterms.shape[0] <= 0 else (jnp.sum(jnp.where(ineqCterms > 0, 1.0, 0.0) * jnp.square(ineqCterms)) /  ineqCterms.size)
+
+		# Compute the total constraint satisfaction
+		coloc_cost = pen_eq_k * cTerm_eq + pen_ineq_sq_k * cTerm_ineq + (0.0 if eqCterms.shape[0] <= 0 else (jnp.sum(lagr_eq_k * eqCterms)/eqCterms.size)) + \
+						(0.0 if ineqCterms.shape[0] <=0 else (jnp.sum(lagr_ineq_k * ineqCterms) / ineqCterms.size))
+
 		loss_of_x = (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss + coloc_cost
-	
+		Lfn = lambda x: L(params, xnext, x, u, extra_args, pen_eq_k, pen_ineq_sq_k, lagr_eq_k, lagr_ineq_k, extra_args_colocation)	
 		# Compute the gradient of the loss with respect to the inputs
-		grad_loss_wrt_inputs = jax.grad(lambda x: jnp.sum((pred_xnext(params, x, u, extra_args)[0] - xnext) ** 2))(x)
+		grad_loss_wrt_inputs = jax.grad(Lfn)(x)
 		mean_grad_loss_wrt_inputs = jnp.mean(grad_loss_wrt_inputs, axis=0)
+		# jax.debug.print("MEAN GRAD LOSS WRT INPUTS {x}", x=mean_grad_loss_wrt_inputs)
+		# jax.debug.print("sigma noise {x}", x=max_noise_norm)
+		# jax.debug.print("enabled {x}", x=grad_reg)
 
-		# Define a function that computes the Hessian for a single data point
-		def single_point_hessian(x):
-			return jax.hessian(lambda x: jnp.sum((pred_xnext(params, x[None, :], u, extra_args)[0] - xnext) ** 2))(x)
+		# # Define a function that computes the Hessian for a single data point
+		# def single_point_hessian(x):
+		# 	print('SINGLE POINT:', x.shape)
+		# 	return jax.hessian(Lfn)(x)
 
-		# Vectorize the function
-		batch_hessian = vmap(single_point_hessian)
+		# # Vectorize the function
+		# print("BATCH SHAPE", x.shape)
+		# batch_hessian = vmap(single_point_hessian)
 
-		# Compute the Hessian for the whole batch
-		hessian_loss_wrt_inputs = batch_hessian(x)
-		mean_hessian_loss_wrt_inputs = jnp.mean(hessian_loss_wrt_inputs, axis=0)
+		# # Compute the Hessian for the whole batch
+		# hessian_loss_wrt_inputs = batch_hessian(x)
+		# mean_hessian_loss_wrt_inputs = jnp.mean(hessian_loss_wrt_inputs, axis=0)
+
+		# TODO: Actually calculate the hessian.
+		mean_hessian_loss_wrt_inputs = 0
 
 		# Compute the gradient regularization term
-		grad_reg = jax.lax.cond(gradient_regularization,
-                        lambda _: sigma_noise_norm * jnp.linalg.norm(mean_grad_loss_wrt_inputs) + 0.5*(sigma_noise_norm**2)*jnp.trace(mean_hessian_loss_wrt_inputs),
+		# grad_reg_term = jax.lax.cond(gradient_regularization,
+        #                 lambda _: sigma_noise_norm * jnp.linalg.norm(mean_grad_loss_wrt_inputs) + 0.5*(sigma_noise_norm**2)*jnp.trace(mean_hessian_loss_wrt_inputs),
+        #                 lambda _: 0.0,
+        #                 None)
+
+		grad_reg_term = jax.lax.cond(grad_reg,
+                        lambda _: max_noise_norm * jnp.linalg.norm(mean_grad_loss_wrt_inputs),
                         lambda _: 0.0,
                         None)
-
+						
+		print("loss_fun called")
 		# Return the composite
-		return loss_of_x + grad_reg, (m_res, jnp.array([coloc_cost, cTerm_eq, cTerm_ineq]))
+		return loss_of_x + grad_reg_term, (m_res, jnp.array([coloc_cost, cTerm_eq, cTerm_ineq]))
+
+	def Lc(params, xnext : jnp.ndarray, x : jnp.ndarray, u : Optional[jnp.ndarray] = None, extra_args : Optional[jnp.ndarray] = None):
+		"""Just the loss constr function itself, but without any gradient regularization or more complex code. See loss_fun_constr."""
+		assert u is None or (u.shape[0] == xnext.shape[0] and len(x.shape) == len(xnext.shape)-1), \
+			'Mismatch ! xnext and u should have one more dimension than x of size roolout'
+
+		# L2 loss if provived by the user
+		l2_loss = 0.5 * sum(jnp.sum(jnp.square(p)) for p in jax.tree_leaves(params)) if pen_l2 > 0.0 else 0.0
+
+		# Rollout strategy
+		def rollout(carry, extra):
+			""" Rollout the computation of the next state
+			"""
+			curr_x, params = carry
+			curr_u, true_nextx = extra
+			# Predict the next state
+			next_x, _, _, _, (eqCterms,_), (ineqCterms,_) = pred_xnext_constr(params, curr_x, curr_u, extra_args)
+			# COmpute the cost associated to the constraints
+			cTerm_eq = 0.0 if eqCterms.shape[0] <= 0 else jnp.sum(jnp.square(eqCterms))/ eqCterms.size
+			cTerm_ineq = 0.0 if ineqCterms.shape[0] <= 0 else (jnp.sum(jnp.where(ineqCterms > 0, 1.0, 0.0) * jnp.square(ineqCterms)) /  ineqCterms.size)
+			# Measure the mean squared difference
+			meanSquredDiff = jnp.sum(jnp.square(next_x - true_nextx)) / (x.shape[0]*(1 if not normalize else x.shape[-1]))
+			return (next_x, params), jnp.array([meanSquredDiff, meanSquredDiff, cTerm_eq, cTerm_ineq])
+
+		# Rollout and compute the rolled out error term
+		_, m_res = jax.lax.scan(rollout, (x, params), (u, xnext))
+
+		return (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss
+		
 
 	# Util function solely for computing colocation loss ehn no constraints are given 
 	def loss_fun_constr(params, xnext : jnp.ndarray, x : jnp.ndarray, u : Optional[jnp.ndarray] = None, extra_args : Optional[jnp.ndarray] = None,
 							extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
-							gradient_regularization=False,
-							sigma_noise_norm=0.2,
 							dual_of_p=2,
 							grads=0):
 		""" Compute the loss function given the current parameters of the custom neural network
@@ -439,28 +532,40 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		cTerm_ineq = 0.0 if ineqCterms.shape[0] <= 0 else (jnp.sum(jnp.where(ineqCterms > 0, 1.0, 0.0) * jnp.square(ineqCterms)) /  ineqCterms.size)
 
 		loss_of_x = (jnp.sum(m_res[:,0]) / (m_res.shape[0])) + pen_l2 * l2_loss
+		Lc_fn = lambda x: Lc(params, xnext, x, u, extra_args)
 	
 		# Compute the gradient of the loss with respect to the inputs
-		grad_loss_wrt_inputs = jax.grad(lambda x: jnp.sum((pred_xnext(params, x, u, extra_args)[0] - xnext) ** 2))(x)
+		grad_loss_wrt_inputs = jax.grad(Lc_fn)(x)
 		mean_grad_loss_wrt_inputs = jnp.mean(grad_loss_wrt_inputs, axis=0)
+		# jax.debug.print("MEAN GRAD LOSS WRT INPUTS {x}", x=mean_grad_loss_wrt_inputs)
+		# jax.debug.print("sigma noise {x}", x=max_noise_norm)
+		# jax.debug.print("enabled {x}", x=grad_reg)
 
-		# Define a function that computes the Hessian for a single data point
-		def single_point_hessian(x):
-			return jax.hessian(lambda x: jnp.sum((pred_xnext(params, x[None, :], u, extra_args)[0] - xnext) ** 2))(x)
+		# # Define a function that computes the Hessian for a single data point
+		# def single_point_hessian(x):
+		# 	return jax.hessian(Lc_fn)(x)
 
-		# Vectorize the function
-		batch_hessian = vmap(single_point_hessian)
+		# # Vectorize the function
+		# batch_hessian = vmap(single_point_hessian)
 
-		# Compute the Hessian for the whole batch
-		hessian_loss_wrt_inputs = batch_hessian(x)
-		mean_hessian_loss_wrt_inputs = jnp.mean(hessian_loss_wrt_inputs, axis=0)
+		# # Compute the Hessian for the whole batch
+		# hessian_loss_wrt_inputs = batch_hessian(x)
+		# mean_hessian_loss_wrt_inputs = jnp.mean(hessian_loss_wrt_inputs, axis=0)
 		
-		grad_reg = jax.lax.cond(gradient_regularization,
-                        lambda _: sigma_noise_norm * jnp.linalg.norm(mean_grad_loss_wrt_inputs) + 0.5*(sigma_noise_norm**2)*jnp.trace(mean_hessian_loss_wrt_inputs),
+		# TODO: Actually calculate the hessian.
+		mean_hessian_loss_wrt_inputs = 0
+
+		# grad_reg_term = jax.lax.cond(gradient_regularization,
+        #                 lambda _: sigma_noise_norm * jnp.linalg.norm(mean_grad_loss_wrt_inputs) + 0.5*(sigma_noise_norm**2)*jnp.trace(mean_hessian_loss_wrt_inputs),
+        #                 lambda _: 0.0,
+        #                 None)
+		grad_reg_term = jax.lax.cond(grad_reg,
+                        lambda _: max_noise_norm * jnp.linalg.norm(mean_grad_loss_wrt_inputs),
                         lambda _: 0.0,
                         None)
-
-		return loss_of_x + grad_reg, (m_res, jnp.array([1e-15, cTerm_eq, cTerm_ineq]))
+		
+		print("loss_fun_constr called")
+		return loss_of_x + grad_reg_term, (m_res, jnp.array([1e-15, cTerm_eq, cTerm_ineq]))
 
 
 
@@ -471,8 +576,7 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 				lagr_eq_k : Optional[jnp.ndarray] = jnp.array([]),
 				lagr_ineq_k : Optional[jnp.ndarray] = jnp.array([]),
 				extra_args_colocation : Optional[Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]] =(None, None, None),
-				n_iter : int = 1,
-				gradient_regularization=False) -> Tuple[hk.Params, optax.OptState, any]:
+				n_iter : int = 1) -> Tuple[hk.Params, optax.OptState, any]:
 		"""Update the parameters of the neural netowkrs via one of the gradient descent optimizer
 			:param params 		: The current weight of the neural network
 			:param opt_state 	: The current state of the optimizer
@@ -490,7 +594,7 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		grad_fun = jax.value_and_grad(loss_fun, has_aux=True)
 		def loop_fun_val(p_loop, extra):
 			new_params, new_opt_state = p_loop
-			(loss, aux), grads = grad_fun(new_params, xnext, x, u, extra_args, pen_eq_k, pen_ineq_sq_k, lagr_eq_k, lagr_ineq_k, extra_args_colocation, gradient_regularization=gradient_regularization)
+			(loss, aux), grads = grad_fun(new_params, xnext, x, u, extra_args, pen_eq_k, pen_ineq_sq_k, lagr_eq_k, lagr_ineq_k, extra_args_colocation)
 			updates, new_opt_state = optim.update(grads, new_opt_state, new_params)
 			new_params = optax.apply_updates(new_params, updates)
 			return (new_params, new_opt_state), grads
@@ -519,11 +623,11 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 
 	return (params_init, m_pen_eq_k, m_pen_ineq_k, m_lagr_eq_k, m_lagr_ineq_k), pred_xnext, (loss_fun, loss_fun_constr), (update, update_lagrange)
 
-def flatmap_to_matrix(flatmap):
-    if isinstance(flatmap, int):
-        return [flatmap]
-    print(flatmap)
-    # Convert FlatMap to a list of arrays
-    array_list = [v for nested_flatmap in flatmap.values() for v in nested_flatmap]
-    print("array list", type(jnp.array(array_list)))
-    return jnp.array(array_list) # TODO: This is inefficient (converting back and forth). Find a way to avoid it.
+# def flatmap_to_matrix(flatmap):
+#     if isinstance(flatmap, int):
+#         return [flatmap]
+#     print(flatmap)
+#     # Convert FlatMap to a list of arrays
+#     array_list = [v for nested_flatmap in flatmap.values() for v in nested_flatmap]
+#     print("array list", type(jnp.array(array_list)))
+#     return jnp.array(array_list) # TODO: This is inefficient (converting back and forth). Find a way to avoid it.

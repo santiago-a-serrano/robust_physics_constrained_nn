@@ -1,7 +1,6 @@
 % This file was created with tikzplotlib v0.10.1.
 \begin{tikzpicture}
 
-\definecolor{cyan}{RGB}{0,255,255}
 \definecolor{darkgray176}{RGB}{176,176,176}
 \definecolor{lightgray204}{RGB}{204,204,204}
 
@@ -19,82 +18,34 @@ xtick style={color=black},
 y grid style={darkgray176},
 ylabel={\(\displaystyle \mathrm{Geometric \ mean \ of \ relative \ error }\)},
 ymajorgrids,
-ymin=0.369999989702025, ymax=0.566881127815158,
+ymin=0.0197568084077459, ymax=0.169778528083139,
 ymode=log,
 ytick style={color=black}
 ]
-\path [fill=red, fill opacity=0.4, semithick]
-(axis cs:1,0.555993498565384)
---(axis cs:1,0.501879393177072)
---(axis cs:5,0.455460059112018)
---(axis cs:10,0.497768315637323)
---(axis cs:20,0.471442336820799)
---(axis cs:100,0.424010594707992)
---(axis cs:100,0.547343008704822)
---(axis cs:100,0.547343008704822)
---(axis cs:20,0.513737527258704)
---(axis cs:10,0.532364507577351)
---(axis cs:5,0.500799322956182)
---(axis cs:1,0.555993498565384)
---cycle;
-
 \path [fill=blue, fill opacity=0.4, semithick]
-(axis cs:1,0.543339466565891)
---(axis cs:1,0.485304349258143)
---(axis cs:5,0.439606735018516)
---(axis cs:10,0.488611254460598)
---(axis cs:20,0.470439140916711)
---(axis cs:100,0.417281731971291)
---(axis cs:100,0.533104811972838)
---(axis cs:100,0.533104811972838)
---(axis cs:20,0.508822558869559)
---(axis cs:10,0.523256585890487)
---(axis cs:5,0.490469046146193)
---(axis cs:1,0.543339466565891)
+(axis cs:1,0.153964527766981)
+--(axis cs:1,0.0412277280521764)
+--(axis cs:5,0.031691158829418)
+--(axis cs:10,0.0323536202637341)
+--(axis cs:20,0.028744767712313)
+--(axis cs:100,0.0217860691662969)
+--(axis cs:100,0.0253107374958692)
+--(axis cs:100,0.0253107374958692)
+--(axis cs:20,0.0321305435558784)
+--(axis cs:10,0.0358539269093548)
+--(axis cs:5,0.0359614521225509)
+--(axis cs:1,0.153964527766981)
 --cycle;
 
-\path [fill=cyan, fill opacity=0.4, semithick]
-(axis cs:1,0.456427463441636)
---(axis cs:1,0.419299709116869)
---(axis cs:5,0.377631734865501)
---(axis cs:10,0.441818638618001)
---(axis cs:20,0.445859634598223)
---(axis cs:100,0.377245439011577)
---(axis cs:100,0.482195861030585)
---(axis cs:100,0.482195861030585)
---(axis cs:20,0.478295122293523)
---(axis cs:10,0.476378439802809)
---(axis cs:5,0.411942135888995)
---(axis cs:1,0.456427463441636)
---cycle;
-
-\addplot [semithick, red, mark=asterisk, mark size=4, mark options={solid}]
-table {%
-1 0.528936386108398
-5 0.478129625320435
-10 0.51506632566452
-20 0.492589980363846
-100 0.485676795244217
-};
-\addlegendentry{No denoising}
 \addplot [semithick, blue, mark=asterisk, mark size=4, mark options={solid}]
 table {%
-1 0.51432192325592
-5 0.465037882328033
-10 0.505933940410614
-20 0.489630877971649
-100 0.475193351507187
+1 0.0975961238145828
+5 0.0338263064622879
+10 0.0341037772595882
+20 0.0304376557469368
+100 0.0235484037548304
 };
-\addlegendentry{With denoising}
-\addplot [semithick, cyan, mark=asterisk, mark size=4, mark options={solid}]
-table {%
-1 0.43786358833313
-5 0.394786983728409
-10 0.459098517894745
-20 0.462077349424362
-100 0.429720640182495
-};
-\addlegendentry{With big denoising}
+\addlegendentry{Djemou et al.}
 \end{axis}
 
 \end{tikzpicture}

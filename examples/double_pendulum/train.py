@@ -58,7 +58,7 @@ def build_params(m_params, output_size=None, input_index=None):
     return nn_params
 
 
-def build_learner(paramsNN, baseline='rk4', constraint_noise=0):
+def build_learner(paramsNN, baseline='rk4', constraint_noise=0, grad_reg=False, max_noise_norm=0.2):
     """ Given a structure like HyperParamsNN, this function generates the functions to compute the loss,
             to update the weight and to predict the next state
             :param paramsNN : HyperParamsNN structure proving the parameters to build the NN
@@ -131,7 +131,7 @@ def build_learner(paramsNN, baseline='rk4', constraint_noise=0):
             build_learner_with_sideinfo(rng_gen, opt, paramsNN.model_name, paramsNN.actual_dt,
                                         paramsNN.n_state, paramsNN.n_control,  nn_params, apriori_net, known_dynamics=None,
                                         constraints_dynamics=None, pen_l2=paramsNN.pen_l2, pen_constr=paramsNN.pen_constr,
-                                        batch_size=paramsNN.batch_size, train_with_constraints=train_with_constraints)
+                                        batch_size=paramsNN.batch_size, train_with_constraints=train_with_constraints, grad_reg=grad_reg, max_noise_norm=max_noise_norm)
 
     ################################################################
     elif type_sideinfo == 1 or type_sideinfo == 2:
@@ -145,7 +145,8 @@ def build_learner(paramsNN, baseline='rk4', constraint_noise=0):
                                                                                                                      pendulum_known_terms),
                                                                                                                  constraints_dynamics=custom_constraints, pen_l2=paramsNN.pen_l2,
                                                                                                                  pen_constr=paramsNN.pen_constr, batch_size=paramsNN.batch_size, train_with_constraints=train_with_constraints,
-                                                                                                                 constraint_noise=constraint_noise)
+                                                                                                                 constraint_noise=constraint_noise,
+                                                                                                                 grad_reg=grad_reg, max_noise_norm=max_noise_norm)
     else:
         raise ("Not implemented yet !")
 
@@ -186,7 +187,7 @@ def load_config_file(path_config_file, extra_args={}):
     optimize_hyperparams = m_config.get('optimize_hyperparams', True)
     big_denoising = m_config.get('big_denoising', True)
     default_sigma_n = m_config.get('default_sigma_n', 0.1)
-    gradient_regularization = m_config.get('gradient_regularization', False)
+    grad_reg = m_config.get('gradient_regularization', False)
 
     opt_info = m_config['optimizer']
 
@@ -215,9 +216,9 @@ def load_config_file(path_config_file, extra_args={}):
                                     freq_accuracy=freq_accuracy, freq_save=int(freq_save), patience=patience)
                       for seed_val in seed_list]
 
-    return weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, gradient_regularization, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
+    return weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, grad_reg, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
 
-def denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, n_rollout, optimize_hyperparams, big_denoising, default_sigma_n):
+def denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, n_rollout, optimize_hyperparams, big_denoising, default_sigma_f=1, default_sigma_l=1, default_sigma_n=1):
     trajectories = []
     for i in range(0, len(xTrainList), trajectory_length):
         trajectories.append(np.array(xTrainList[i:i+trajectory_length]))
@@ -228,8 +229,8 @@ def denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, n_rollou
             trajectories[idx] = np.vstack((trajectories[idx], xnextTrainList[future][trajectory_max_idx-1]))
         trajectory_max_idx += trajectory_length
     
-    sigma_f = 1
-    sigma_l = 1
+    sigma_f = default_sigma_f
+    sigma_l = default_sigma_l
     sigma_n = default_sigma_n
     if optimize_hyperparams:
         sigma_f, sigma_l, sigma_n = gpr.find_optim_hyperparams(trajectories[0], big_denoising)
@@ -254,10 +255,23 @@ def gp_denoise_trajectory(trajectory, sigma_f, sigma_l, sigma_n, big_denoising):
     # noise must be specified if optimize_hyperparam is set to false
     return gpr.get_denoised_traj(trajectory, sigma_f, sigma_l, sigma_n, big_denoising)
 
+def add_noise_to_params(params, weight_noise, bias_noise):
+    key = jax.random.PRNGKey(0)
+    params_noisy = {}
+    for it_key, it_value in params.items():
+        params_noisy[it_key] = {}
+        for w_or_b, w_or_b_value in it_value.items():
+            if w_or_b == 'w':
+                params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=weight_noise) if weight_noise > 0.00001 else w_or_b_value
+            elif w_or_b == 'b':
+                params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=bias_noise) if weight_noise > 0.00001 else w_or_b_value
+    
+    return params_noisy
+
 
 def main_fn(path_config_file, extra_args={}):
     # Read the configration file
-    weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, gradient_regularization, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
+    weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, grad_reg, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file) = load_config_file(
         path_config_file, extra_args)
     reducedSampleLog = SampleLog(xTrain=None, xTrainExtra=None, uTrain=None, xnextTrain=None,
                                  lowU_train=mSampleLog.lowU_train, highU_train=mSampleLog.highU_train,
@@ -271,7 +285,7 @@ def main_fn(path_config_file, extra_args={}):
     # Print the sample log info
     print("###### SampleLog ######")
     print(reducedSampleLog)
-    print("GRADIENT REGULARIZATION ENABLED?", gradient_regularization)
+    print("GRADIENT REGULARIZATION ENABLED?", grad_reg)
 
     # Training data
     xTrainList = np.asarray(mSampleLog.xTrain)
@@ -312,11 +326,15 @@ def main_fn(path_config_file, extra_args={}):
             dbg_msg += "{}\n".format(mParamsNN)
             tqdm.write(dbg_msg)
 
+            # for gradient regularization
+            # since our noise will be 4 values (four relevant variables), (sqrt(4x^2)) = 2x (if x is positive), we're getting l2 norm
+            max_noise_norm = default_sigma_n * 2
+
             # Build the neural network, the update, loss function and paramters of the neural network structure
             # TODO: Here I must edit something related with the Lagrange
             rng_gen, opt, (params, m_pen_eq_k, m_pen_ineq_k, m_lagr_eq_k, m_lagr_ineq_k), pred_xnext,\
                 loss_fun, update, update_lagrange, loss_fun_constr, train_with_constraints = build_learner(
-                    mParamsNN, type_baseline, constraint_noise=constraint_noise)
+                    mParamsNN, type_baseline, constraint_noise=constraint_noise, grad_reg=grad_reg, max_noise_norm=max_noise_norm)
 
             # Initialize the optimizer with the initial parameters
             opt_state = opt.init(params)
@@ -372,22 +390,19 @@ def main_fn(path_config_file, extra_args={}):
                                            lagr_ineq_k=m_lagr_ineq_k if m_lagr_ineq_k.shape[
                                                0] <= 0 else m_lagr_ineq_k[idx_coloc_train],
                                            extra_args_colocation=(batch_coloc, None, None))
-                
-                # since our noise will be 4 values (four relevant variables), (sqrt(4x^2)) = 2x (if x is positive), we're getting l2 norm
-                little_sigma = default_sigma_n * 2
 
                 if update_freq[number_inner_iteration]:
                     if not train_with_constraints:  # In case there is no constraints -> Try to also log the constraints incurred by the current neural structure
                         loss_tr, (spec_data_tr, coloc_ctr) = loss_fun_constr(
-                            params, xTrainNext, xTrain, gradient_regularization=gradient_regularization, sigma_noise_norm=little_sigma, grads=grads)
+                            params, xTrainNext, xTrain, grads=grads)
                         loss_te, (spec_data_te, coloc_cte) = loss_fun_constr(
-                            params, xTestNext, xTest, extra_args_colocation=(coloc_set, None, None), gradient_regularization=gradient_regularization, sigma_noise_norm=little_sigma, grads=grads)
+                            params, xTestNext, xTest, extra_args_colocation=(coloc_set, None, None), grads=grads)
                     else:
                         loss_tr, (spec_data_tr, coloc_ctr) = loss_fun(
-                            params, xTrainNext, xTrain, gradient_regularization=gradient_regularization, sigma_noise_norm=little_sigma, grads=grads)
+                            params, xTrainNext, xTrain, grads=grads)
                         loss_te, (spec_data_te, coloc_cte) = loss_fun(params, xTestNext, xTest, pen_eq_k=m_pen_eq_k, pen_ineq_sq_k=m_pen_ineq_k,
                                                                       lagr_eq_k=m_lagr_eq_k, lagr_ineq_k=m_lagr_ineq_k,
-                                                                      extra_args_colocation=(coloc_set, None, None), gradient_regularization=gradient_regularization, sigma_noise_norm=little_sigma, grads=grads)
+                                                                      extra_args_colocation=(coloc_set, None, None), grads=grads)
 
                     # Log the value obtained by evaluating the current model
                     dict_loss['total_loss_train'].append(float(loss_tr))
@@ -503,18 +518,11 @@ def main_fn(path_config_file, extra_args={}):
             # Once the algorithm has converged, collect and save the data and params
             dict_loss_per_seed[mParamsNN.seed_init] = dict_loss
             final_log_dict[i] = dict_loss_per_seed
+            
             # Here we update the weights with the noise
-            key = jax.random.PRNGKey(0)
-            # print(best_params) # TODO: Remove this
-            best_params_noisy = {}
-            for it_key, it_value in best_params.items():
-                best_params_noisy[it_key] = {}
-                for w_or_b, w_or_b_value in it_value.items():
-                    if w_or_b == 'w':
-                        best_params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=weight_noise) if weight_noise > 0.00001 else w_or_b_value
-                    elif w_or_b == 'b':
-                        best_params_noisy[it_key][w_or_b] = add_gaussian_noise(key, w_or_b_value, scale=bias_noise) if weight_noise > 0.00001 else w_or_b_value
-            dict_params_per_seed[mParamsNN.seed_init] = best_params_noisy
+            # If this code causes any issues, go back to the version from before Jan 26, 2024.
+            params_noisy = add_noise_to_params(best_params, weight_noise, bias_noise)
+            dict_params_per_seed[mParamsNN.seed_init] = params_noisy
             final_params_dict[i] = dict_params_per_seed
 
             # Cretae the log

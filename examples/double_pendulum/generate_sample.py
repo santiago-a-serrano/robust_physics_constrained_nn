@@ -118,14 +118,12 @@ def gen_domain_shift(rng_key, time_step, num_traj, trajectory_length, n_rollout,
     res_currx = []
     res_shift = [[] for r in range(n_rollout)]
     for i in tqdm(range(num_traj), leave=False):
-        print("NEW I: {i}")
         while True:
             rng_key, subkey = jax.random.split(rng_key)
             x0val = jax.random.uniform(
                 subkey, shape=x0_init_lb.shape, minval=x0_init_lb, maxval=x0_init_ub)
             # Two dimension array with
             xnextVal = solve_analytical(x0val, tIndexes)
-            print(xnextVal.shape)
             if noisy and noise > 0.00001:
                 key = random.PRNGKey(0)
                 xnextVal = add_gaussian_noise(key, xnextVal, noise)

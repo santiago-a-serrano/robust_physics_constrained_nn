@@ -9,7 +9,7 @@ from pysindy.feature_library import PolynomialLibrary, FourierLibrary, ConcatLib
 from train import denoise_trajectories
 
 class SINDy:
-    def __init__(self, data_file_path, gpsindy=False):
+    def __init__(self, data_file_path, gpsindy=False, default_sigma_f=1, default_sigma_l=1, default_sigma_n=1, optimize_hyperparams=True):
         data_file = open(data_file_path, 'rb')
         mSampleLog = pickle.load(data_file)
         data_file.close()
@@ -20,7 +20,10 @@ class SINDy:
         (_, num_traj_data, trajectory_length) = mSampleLog.disable_substep
         coloc_set = jnp.array(coloc_set)
         if gpsindy:
-            xTrainList, xnextTrainList = denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, 5, True, False, -1)
+            xTrainList, xnextTrainList = denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, 5, optimize_hyperparams, False, 
+                                                              default_sigma_f=default_sigma_f, 
+                                                              default_sigma_l=default_sigma_l, 
+                                                              default_sigma_n=default_sigma_n)
             print("Gaussian Process Denoising enabled")
         else:
             print("Gaussian Process Denoising disabled")

@@ -2,7 +2,10 @@
 # This example contains the full set of allowed parameters --> Some of them can be ignored
 
 # Gaussian training data noise, defaults to 0.1 if no value:
-noise: 0.07
+gaussian_noise: 0.00
+
+# Adversarial training data noise, it's put to every datapoint (location)
+adv_noise: DEST_FILE/worst_perturbations/0.1datamaxnorm.npy
 
 # The time step in the environment
 time_step: 0.01

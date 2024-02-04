@@ -328,7 +328,7 @@ def main_fn(path_config_file, extra_args={}):
 
             # for gradient regularization
             # since our noise will be 4 values (four relevant variables), (sqrt(4x^2)) = 2x (if x is positive), we're getting l2 norm
-            max_noise_norm = default_sigma_n * 2
+            max_noise_norm = default_sigma_n
 
             # Build the neural network, the update, loss function and paramters of the neural network structure
             # TODO: Here I must edit something related with the Lagrange

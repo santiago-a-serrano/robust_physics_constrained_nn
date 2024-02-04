@@ -6,6 +6,7 @@ import pickle
 import jax
 import jax.numpy as jnp
 from jax import grad, vmap, jit, random
+import numpy as np
 
 
 from jax.experimental.ode import odeint
@@ -104,7 +105,7 @@ def solve_analytical(initial_state, times):
                   t=times, rtol=1e-10, atol=1e-10)
 
 
-def gen_domain_shift(rng_key, time_step, num_traj, trajectory_length, n_rollout, x0_init_lb, x0_init_ub, merge_traj=True, noisy=False, noise=0.1):
+def gen_domain_shift(rng_key, time_step, num_traj, trajectory_length, n_rollout, x0_init_lb, x0_init_ub, merge_traj=True, noisy=False, noise=0.1, adv_noise_data=np.array([])):
     """ Generate trajectory of the pendulum from a random initial distribution between x0_init_lb and x0_init_ub
     """
     # # Integrate for smaller time step
@@ -127,6 +128,9 @@ def gen_domain_shift(rng_key, time_step, num_traj, trajectory_length, n_rollout,
             if noisy and noise > 0.00001:
                 key = random.PRNGKey(0)
                 xnextVal = add_gaussian_noise(key, xnextVal, noise)
+            if adv_noise_data.size != 0:
+                xnextVal += adv_noise_data
+    
             fknown1, fknown2 = jax.vmap(
                 pendulum_unknown_terms_aux, (0,))(xnextVal)
             idx_pairs = jnp.where(jnp.diff(jnp.hstack(([False], jnp.logical_or(
@@ -193,7 +197,8 @@ def load_config_yaml(path_config_file, extra_args={}):
     print('######################################################')
 
     # Parse the noise
-    noise = m_config.get('noise', 0.1)
+    noise = m_config.get('gaussian_noise', 0.1)
+    adv_noise = m_config.get('adv_noise')
 
     # Parse the time step
     time_step = m_config.get('time_step', 0.01)
@@ -225,14 +230,14 @@ def load_config_yaml(path_config_file, extra_args={}):
     # Parse the output file
     output_file = m_config.get('output_file', 'double_pendulum')
 
-    return noise, time_step, seed_number, jnp.array(x0_init_lb_train), jnp.array(x0_init_ub_train),\
+    return noise, adv_noise, time_step, seed_number, jnp.array(x0_init_lb_train), jnp.array(x0_init_ub_train),\
         jnp.array(x0_init_lb_test), jnp.array(x0_init_ub_test),\
         n_rollout, num_trajectory_train, num_trajectory_test, size_trajectory, n_coloc, output_file
 
 
 def main_fn(path_config_file, extra_args={}):
     # Get the parameters from the config file
-    noise, time_step, seed_number, x0_init_lb_train, x0_init_ub_train, x0_init_lb_test, x0_init_ub_test,\
+    noise, adv_noise, time_step, seed_number, x0_init_lb_train, x0_init_ub_train, x0_init_lb_test, x0_init_ub_test,\
         n_rollout, num_trajectory_train, num_trajectory_test, size_trajectory, n_coloc, output_file = \
         load_config_yaml(path_config_file, extra_args)
     # Random number genrator
@@ -245,8 +250,16 @@ def main_fn(path_config_file, extra_args={}):
     max_traj = int(jnp.max(jnp.array(num_trajectory_train)))
     # Generate the Training set via the set of trajectory size
     # rng_key, xTrain, xTrainRolled = gen_samples(rng_key, time_step, max_traj, size_trajectory, n_rollout, x0_init_lb_train, x0_init_ub_train)
+    if adv_noise != None:
+        try:
+            adv_noise_data = np.load(adv_noise)
+            print(f"Adversarial noise from {adv_noise} will be added.")
+        except:
+            adv_noise_data = np.array([])
+            print(f"Adversarial noise file {adv_noise} couldn't be opened.")
+
     rng_key, xTrain, xTrainRolled = gen_domain_shift(
-        rng_key, time_step, max_traj, size_trajectory, n_rollout, x0_init_lb_train, x0_init_ub_train, noisy=True, noise=noise)
+        rng_key, time_step, max_traj, size_trajectory, n_rollout, x0_init_lb_train, x0_init_ub_train, noisy=True, noise=noise, adv_noise_data=adv_noise_data)
     # exit()
     # Generate the colocation points
     coloc_set = jax.random.uniform(rng_key, shape=(

@@ -74,7 +74,7 @@ class LogMarginalLikelihood(nn.Module):
         return lml
 
 
-def get_denoised_traj(trajectory, sigma_f, sigma_l, sigma_n, big_denoising=True):
+def get_denoised_traj(trajectory, sigma_f, sigma_l, sigma_n, big_denoising=False):
     t = torch.arange(0, len(trajectory), dtype=torch.float)
     trajectory = torch.from_numpy(trajectory).T
     K = cov_matrix(t, t, squared_exponential_kernel, sigma_f, sigma_l)

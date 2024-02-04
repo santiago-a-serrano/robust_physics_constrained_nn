@@ -1,3 +1,4 @@
+import math
 import pickle
 import jax
 import jax.numpy as jnp
@@ -13,7 +14,16 @@ def enforce_max_norm(vector, max_norm):
     else:
         normalized_vector = vector / vector_norm
         return normalized_vector * max_norm
-# TODO: Fix the noise norm issue. Print the loss.
+    
+def enforce_max_norm_matrix(matrix, max_norm):
+    matrix_norm = jnp.linalg.norm(matrix, 'fro')
+    if matrix_norm <= max_norm:
+        return matrix
+    else:
+        normalized_matrix = matrix / matrix_norm
+        return normalized_matrix * max_norm
+
+
 def loss_fn(x_noise, loss_fun_1, loss_fun_2, params, x_next, x, max_norm):
     batch_size = len(x)
     x_noise = enforce_max_norm(x_noise, max_norm)
@@ -22,9 +32,18 @@ def loss_fn(x_noise, loss_fun_1, loss_fun_2, params, x_next, x, max_norm):
     term_2, _ = loss_fun_2(params, x_next, x + noise_for_batch)
     return term_1 + term_2
 
-def update(x_noise, loss_fun_1, loss_fun_2, params, x_next, x, opt_state, optimizer, max_norm):
+def loss_fn_traj(traj_noise, loss_fun_1, loss_fun_2, params, x_next, x, max_norm):
+    traj_noise = enforce_max_norm_matrix(traj_noise, max_norm)
+    term_1, _ = loss_fun_1(params, x_next, x + traj_noise)
+    term_2, _ = loss_fun_2(params, x_next, x + traj_noise)
+    return term_1 + term_2
+
+def update(x_noise, loss_fun_1, loss_fun_2, params, x_next, x, opt_state, optimizer, max_norm, make_traj_noise=False):
     def loss_fn_wrapped(x_noise):
-        return loss_fn(x_noise, loss_fun_1, loss_fun_2, params, x_next, x, max_norm)
+        if make_traj_noise:
+            return loss_fn_traj(x_noise, loss_fun_1, loss_fun_2, params, x_next, x, max_norm)
+        else:
+            return loss_fn(x_noise, loss_fun_1, loss_fun_2, params, x_next, x, max_norm)
 
     grad_fn = jax.value_and_grad(loss_fn_wrapped)
     loss, gradients = grad_fn(x_noise)
@@ -39,11 +58,20 @@ def random_vector_of_norm(norm, shape):
     normalized_vector = vector / vector_norm
     return normalized_vector * norm
 
+def random_matrix_of_frobenius_norm(norm, shape):
+    matrix = jax.random.normal(jax.random.PRNGKey(0), shape)
+    matrix_norm = jnp.linalg.norm(matrix, 'fro')
+    normalized_matrix = matrix / matrix_norm
+    return normalized_matrix * norm
+    
 
-
-def main(max_x_noise, max_weight_noise=0, max_bias_noise=0):
+# make_traj_noise = False -> noise of shape (datapoint_size,)
+# make_traj_noise = True -> noise of shape (trajectory_length, datapoint_size)
+def main(max_x_noise, max_weight_noise=0, max_bias_noise=0, make_traj_noise=False):
     batch_size = 64
     datapoint_size = 4
+    trajectory_length = 300
+    max_traj_noise = max_x_noise * math.sqrt(trajectory_length)
 
     with open('DEST_FILE/base_datatrain_00prcnt.pkl', 'rb') as f:
         trained_model = pickle.load(f)
@@ -54,7 +82,11 @@ def main(max_x_noise, max_weight_noise=0, max_bias_noise=0):
     _, _, _, pred_xnext, loss_fun, _, _, loss_fun_constr, _ = build_learner(trained_model.nn_hyperparams[0], trained_model.baseline)
 
     # TODO: Implement weight and bias noise too
-    x_noise = random_vector_of_norm(max_x_noise, (datapoint_size,))
+    if make_traj_noise:
+        x_noise = random_matrix_of_frobenius_norm(max_traj_noise, (trajectory_length, datapoint_size))
+    else:
+        x_noise = random_vector_of_norm(max_x_noise, (datapoint_size,))
+
     optimizer = optax.adam(learning_rate=0.001)
 
     with open('DEST_FILE/datatrain_noise00prcnt.pkl', 'rb') as f:
@@ -64,10 +96,10 @@ def main(max_x_noise, max_weight_noise=0, max_bias_noise=0):
         xnext = generated_data.xnextTrain
 
     # TODO: Remove this (it's for testing purposes)
-    indices_test = jax.random.choice(jax.random.PRNGKey(99), len(x), shape=(batch_size,), replace=False)
-    r_x_noise_to_add = jnp.asarray([0.01401838, -0.0105391,  -0.00600591,  0.00750609])
-    result = loss_fn(r_x_noise_to_add, loss_fun, loss_fun_constr, params, xnext[:, indices_test], x[indices_test], 999999)
-    print("loss", result)
+    # indices_test = jax.random.choice(jax.random.PRNGKey(99), len(x), shape=(batch_size,), replace=False)
+    # r_x_noise_to_add = jnp.asarray([0.01401838, -0.0105391,  -0.00600591,  0.00750609])
+    # result = loss_fn(r_x_noise_to_add, loss_fun, loss_fun_constr, params, xnext[:, indices_test], x[indices_test], 999999)
+    # print("loss", result)
 
     # Initialize the optimizer state
     opt_state = optimizer.init(x_noise)
@@ -75,22 +107,41 @@ def main(max_x_noise, max_weight_noise=0, max_bias_noise=0):
 
     # TODO: More epochs?
     # TODO: Only 0.2 max_noise was trained 200 epochs.
-    for epoch in range(200):
-        # Select a random batch of size batch_size from x and xnext
-        indices = jax.random.choice(jax.random.PRNGKey(epoch), len(x), shape=(batch_size,), replace=False)
-        x_batch = x[indices]
-        xnext_batch = xnext[:, indices]
-        x_noise, opt_state, loss = update(x_noise, loss_fun, loss_fun_constr, params, xnext_batch, x_batch, opt_state, optimizer, max_x_noise)
-        print("Epoch:", epoch, "\tLoss:", loss)
-        # the x_noise before enforcing the max norm
-        print("sub_x_noise:", x_noise, "norm:", jnp.linalg.norm(x_noise))
-        # the x_noise after enforcing the max norm
-        real_x_noise = enforce_max_norm(x_noise, max_x_noise)
-        print("real_x_noise", real_x_noise, "norm:", jnp.linalg.norm(real_x_noise))
-        print()
+    if make_traj_noise:
+        print("make_traj_noise was set to true, making adv. noise for complete trajectory")
+        print(x_noise)
+        x_split = jnp.array(jnp.array_split(x, len(x) / trajectory_length))
+        xnext_split = jnp.array([jnp.array_split(xnext_array, len(xnext_array) / trajectory_length) for xnext_array in xnext])
+        for trajectory_id in range(len(x_split)):
+            x_noise, opt_state, loss = update(x_noise, loss_fun, loss_fun_constr, params, xnext_split[:, trajectory_id], x_split[trajectory_id], opt_state, optimizer, max_traj_noise, make_traj_noise=True)
+            print("Trajectory:", trajectory_id, "\tLoss:", loss)
+            # the traj_noise before enforcing the max norm
+            print("sub_traj_noise[0]:", x_noise[0], "norm:", jnp.linalg.norm(x_noise, 'fro') / math.sqrt(trajectory_length))
+            real_traj_noise = enforce_max_norm_matrix(x_noise, max_traj_noise)
+            print("real_traj_noise[0]", real_traj_noise[0], "norm:", jnp.linalg.norm(real_traj_noise, 'fro') / math.sqrt(trajectory_length))
+            print()
 
-    np.save(f'DEST_FILE/worst_perturbations/{max_x_noise}datamaxnorm.npy', real_x_noise)
-    print("Saved worst perturbation for", max_x_noise, "max noise norm in data.")
+        np.save(f'DEST_FILE/worst_perturbations/{max_x_noise}trajmaxnorm.npy', real_traj_noise)
+        print("Saved worst perturbation for", max_x_noise, "max traj noise norm in data.")
+
+    else:
+        print("make_traj_noise was set to false, making adv. noise for only one datapoint")
+        for epoch in range(100):
+            # Select a random batch of size batch_size from x and xnext
+            indices = jax.random.choice(jax.random.PRNGKey(epoch), len(x), shape=(batch_size,), replace=False)
+            x_batch = x[indices]
+            xnext_batch = xnext[:, indices]
+            x_noise, opt_state, loss = update(x_noise, loss_fun, loss_fun_constr, params, xnext_batch, x_batch, opt_state, optimizer, max_x_noise, make_traj_noise=False)
+            print("Epoch:", epoch, "\tLoss:", loss)
+            # the x_noise before enforcing the max norm
+            print("sub_x_noise:", x_noise, "norm:", jnp.linalg.norm(x_noise))
+            # the x_noise after enforcing the max norm
+            real_x_noise = enforce_max_norm(x_noise, max_x_noise)
+            print("real_x_noise", real_x_noise, "norm:", jnp.linalg.norm(real_x_noise))
+            print()
+
+        np.save(f'DEST_FILE/worst_perturbations/{max_x_noise}datamaxnorm.npy', real_x_noise)
+        print("Saved worst perturbation for", max_x_noise, "max noise norm in data.")
 
     
 
@@ -101,3 +152,5 @@ def main(max_x_noise, max_weight_noise=0, max_bias_noise=0):
 # main(max_x_noise=0.05)
 # main(max_x_noise=0.1)
 # main(max_x_noise=0.2)
+
+main(max_x_noise=0.2, make_traj_noise=True)

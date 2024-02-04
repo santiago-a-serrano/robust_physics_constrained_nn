@@ -129,8 +129,8 @@ def gen_domain_shift(rng_key, time_step, num_traj, trajectory_length, n_rollout,
                 key = random.PRNGKey(0)
                 xnextVal = add_gaussian_noise(key, xnextVal, noise)
             if adv_noise_data.size != 0:
-                xnextVal += adv_noise_data
-    
+                pass
+                # res_currx += adv_noise_data # will broadcast accordingly if noise is per-datapoint
             fknown1, fknown2 = jax.vmap(
                 pendulum_unknown_terms_aux, (0,))(xnextVal)
             idx_pairs = jnp.where(jnp.diff(jnp.hstack(([False], jnp.logical_or(
@@ -144,6 +144,8 @@ def gen_domain_shift(rng_key, time_step, num_traj, trajectory_length, n_rollout,
             # print("n_rollout", n_rollout)
             if end_seq - start_seq >= (trajectory_length + n_rollout):
                 xnextVal = xnextVal[start_seq:end_seq, :]
+                if adv_noise_data.size != 0:
+                    xnextVal = jnp.concatenate([xnextVal[:trajectory_length] + adv_noise_data, xnextVal[trajectory_length:]])
                 break
 
         # Check wether a long enough trajectory can be extracted that satisfy pendulum_unknown_terms(state) < 0  or pendulum_unknown_terms(state) > 0

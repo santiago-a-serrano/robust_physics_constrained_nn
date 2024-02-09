@@ -125,7 +125,7 @@ def generate_loss(loss_evol_1traj, window=1):
     # 		(constr_error_tr_mean, np.maximum(constr_error_tr_min,constr_error_tr_mean-constr_error_tr_std), np.minimum(constr_error_tr_max,constr_error_tr_mean+constr_error_tr_std)),\
     # 		(constr_error_te_mean, np.maximum(constr_error_te_min,constr_error_te_mean-constr_error_te_std), np.minimum(constr_error_te_max,constr_error_te_mean+constr_error_te_std))
 
-
+# xtrue contains multiple trajectories
 def generate_rel_error(util_fun, params, xtrue, indx_traj=0):
     """ Generate the relative error and geometric mean of the error for some given trajectories of the pendulum
 

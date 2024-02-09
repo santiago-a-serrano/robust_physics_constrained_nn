@@ -15,7 +15,8 @@ perform_gp_denoising: False
 
 # If perform_gp_denoising is True, otherwise ignore:
 # Use Log Marginal Likelihood to find the best hyperparameters for the GP denoising
-optimize_hyperparams: False 
+optimize_hyperparams: False
+
 # Don't square the noise in the calculations, so it doesn't end up even smaller
 big_denoising: False
 # The sigma_n (noise) that will be used for denoising if the hyperparameters are not optimized (optimize_hyperparams: False)
@@ -23,9 +24,9 @@ big_denoising: False
 # If gradient_regularization is set to true, this value will be used as the maximum norm of noise
 # TODO: Specify that no matter if the adv noise is for the whole trajectory or for one datapoint,
 # the default_sigma_n is the norm of the noise of a datapoint.
-default_sigma_n: 0.2
+default_sigma_n: 0.00
 # Choose if adapt the loss function in order to do gradient regularization
-gradient_regularization: True
+gradient_regularization: False
 
 # The file that contains the training and testing dataset
 train_data_file: ./data/datatrain_dt0p01.pkl

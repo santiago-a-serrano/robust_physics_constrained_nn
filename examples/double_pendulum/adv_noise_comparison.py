@@ -132,28 +132,28 @@ def main():
     # Paths to trained models, for each percentage of noise, with no/yes GPR Denoising
     trained_models = {
         '0.02': {
-            'state_noise_no': 'DEST_FILE/train_adv/0.02-nogradreg.pkl',
-            'traj_noise_no': 'DEST_FILE/train_adv/trajn0.02-nogradreg.pkl',
-            'state_noise_yes': 'DEST_FILE/train_adv/0.02-yesgradreg.pkl',
-            'traj_noise_yes': 'DEST_FILE/train_adv/trajn0.02-yesgradreg.pkl'
+            'state_noise_no': 'pregenerated/trained_models/mlp/0.02advnoise.pkl',
+            'traj_noise_no': 'pregenerated/trained_models/mlp_a2/0.02advnoise.pkl',
+            'state_noise_yes': 'pregenerated/trained_models/grmlp/0.02advnoise.pkl',
+            'traj_noise_yes': 'pregenerated/trained_models/grmlp_a2/0.02advnoise.pkl'
         },
         '0.03': {
-            'state_noise_no': 'DEST_FILE/train_adv/0.03-nogradreg.pkl', #ya
-            'traj_noise_no': 'DEST_FILE/train_adv/trajn0.03-nogradreg.pkl',
-            'state_noise_yes': 'DEST_FILE/train_adv/0.03-yesgradreg.pkl', #bug
-            'traj_noise_yes': 'DEST_FILE/train_adv/trajn0.03-yesgradreg.pkl'
+            'state_noise_no': 'pregenerated/trained_models/mlp/0.03advnoise.pkl',
+            'traj_noise_no': 'pregenerated/trained_models/mlp_a2/0.03advnoise.pkl',
+            'state_noise_yes': 'pregenerated/trained_models/grmlp/0.03advnoise.pkl', 
+            'traj_noise_yes': 'pregenerated/trained_models/grmlp_a2/0.03advnoise.pkl'
         },
         '0.05': {
-            'state_noise_no': 'DEST_FILE/train_adv/0.05-nogradreg.pkl',
-            'traj_noise_no': 'DEST_FILE/train_adv/trajn0.05-nogradreg.pkl',
-            'state_noise_yes': 'DEST_FILE/train_adv/0.05-yesgradreg.pkl',
-            'traj_noise_yes': 'DEST_FILE/train_adv/trajn0.05-yesgradreg.pkl'
+            'state_noise_no': 'pregenerated/trained_models/mlp/0.05advnoise.pkl',
+            'traj_noise_no': 'pregenerated/trained_models/mlp_a2/0.05advnoise.pkl',
+            'state_noise_yes': 'pregenerated/trained_models/grmlp/0.05advnoise.pkl',
+            'traj_noise_yes': 'pregenerated/trained_models/grmlp_a2/0.05advnoise.pkl'
         },
         '0.1': {
-            'state_noise_no': 'DEST_FILE/train_adv/0.1-nogradreg.pkl',
-            'traj_noise_no': 'DEST_FILE/train_adv/trajn0.1-nogradreg.pkl',
-            'state_noise_yes': 'DEST_FILE/train_adv/0.1-yesgradreg.pkl',
-            'traj_noise_yes': 'DEST_FILE/train_adv/trajn0.1-yesgradreg.pkl'
+            'state_noise_no': 'pregenerated/trained_models/mlp/0.1advnoise.pkl',
+            'traj_noise_no': 'pregenerated/trained_models/mlp_a2/0.1advnoise.pkl',
+            'state_noise_yes': 'pregenerated/trained_models/grmlp/0.1advnoise.pkl',
+            'traj_noise_yes': 'pregenerated/trained_models/grmlp_a2/0.1advnoise.pkl'
         }
     }
 

@@ -117,16 +117,16 @@ def main():
     # Paths to trained models, for each percentage of noise, with no/yes GPR Denoising
     trained_models = {
         '0.01': {
-            'no': 'ugp_denoise/0.01-false-na-na.pkl',
-            'yes': 'ugp_denoise/0.01-true-true-false.pkl'
+            'no': 'pregenerated/trained_models/mlp/0.01gaussiannoise.pkl',
+            'yes': 'pregenerated/trained_models/gpmlp/0.01gaussiannoise.pkl'
         },
         '0.05': {
-            'no': 'ugp_denoise/0.05-false-na-na.pkl',
-            'yes': 'ugp_denoise/0.05-true-true-false.pkl'
+            'no': 'pregenerated/trained_models/mlp/0.05gaussiannoise.pkl',
+            'yes': 'pregenerated/trained_models/gpmlp/0.05gaussiannoise.pkl'
         },
         '0.1': {
-            'no': 'ugp_denoise/0.1-false-na-na.pkl',
-            'yes': 'ugp_denoise/0.1-true-true-false.pkl'
+            'no': 'pregenerated/trained_models/mlp/0.1gaussiannoise.pkl',
+            'yes': 'pregenerated/trained_models/gpmlp/0.1gaussiannoise.pkl'
         }
     }
 

@@ -13,7 +13,7 @@ def squared_exponential_kernel(argument_1, argument_2, sigma_f, sigma_l):
 def cov_matrix(X1, X2, covariance_function, sigma_f, sigma_l):
     return torch.stack([torch.stack([covariance_function(x1, x2, sigma_f, sigma_l) for x1 in X1]) for x2 in X2])
     
-def find_optim_hyperparams(trajectory, big_denoising=True):
+def find_optim_hyperparams(trajectory, big_denoising=False):
     t = torch.arange(0, len(trajectory), dtype=torch.float)
     trajectory = torch.from_numpy(trajectory).T
     model = LogMarginalLikelihood(trajectory, t, big_denoising)
@@ -49,7 +49,7 @@ def find_optim_hyperparams(trajectory, big_denoising=True):
 
     
 class LogMarginalLikelihood(nn.Module):
-    def __init__(self, trajectory, t, big_denoising=True):
+    def __init__(self, trajectory, t, big_denoising=False):
         super().__init__()
         self.theta_f = nn.Parameter(torch.tensor(1.0))
         self.theta_l = nn.Parameter(torch.tensor(1.0))

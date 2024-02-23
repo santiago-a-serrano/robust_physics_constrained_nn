@@ -73,22 +73,22 @@ def main():
     # Paths to trained models, for each percentage of noise, with no/yes GPR Denoising
     trained_models = {
         '0.02': {
-            'MLP': 'DEST_FILE/train_adv/0.02-nogradreg.pkl',
-            'GRMLP': 'DEST_FILE/train_adv/0.02-yesgradreg.pkl',
-            'PhysMLP': 'DEST_FILE/advfinal/nogr_0.02noise_sideinfo.pkl',
-            'GRPhysMLP': 'DEST_FILE/advfinal/yesgr_0.02noise_sideinfo.pkl'
+            'MLP': 'pregenerated/trained_models/mlp/0.02advnoise.pkl',
+            'GRMLP': 'pregenerated/trained_models/grmlp/0.02advnoise.pkl',
+            'PhysMLP': 'pregenerated/trained_models/physmlp/0.02advnoise.pkl',
+            'GRPhysMLP': 'pregenerated/trained_models/grphysmlp/0.02advnoise.pkl'
         },
         '0.03': {
-            'MLP': 'DEST_FILE/train_adv/0.03-nogradreg.pkl',
-            'GRMLP': 'DEST_FILE/train_adv/0.03-yesgradreg.pkl',
-            'PhysMLP': 'DEST_FILE/advfinal/nogr_0.03noise_sideinfo.pkl',
-            'GRPhysMLP': 'DEST_FILE/advfinal/yesgr_0.03noise_sideinfo.pkl'
+            'MLP': 'pregenerated/trained_models/mlp/0.03advnoise.pkl',
+            'GRMLP': 'pregenerated/trained_models/grmlp/0.03advnoise.pkl',
+            'PhysMLP': 'pregenerated/trained_models/physmlp/0.03advnoise.pkl',
+            'GRPhysMLP': 'pregenerated/trained_models/grphysmlp/0.03advnoise.pkl'
         },
         '0.05': {
-            'MLP': 'DEST_FILE/train_adv/0.05-nogradreg.pkl',
-            'GRMLP': 'DEST_FILE/train_adv/0.05-yesgradreg.pkl',
-            'PhysMLP': 'DEST_FILE/advfinal/nogr_0.05noise_sideinfo.pkl',
-            'GRPhysMLP': 'DEST_FILE/advfinal/yesgr_0.05noise_sideinfo.pkl'
+            'MLP': 'pregenerated/trained_models/mlp/0.05advnoise.pkl',
+            'GRMLP': 'pregenerated/trained_models/grmlp/0.05advnoise.pkl',
+            'PhysMLP': 'pregenerated/trained_models/physmlp/0.05advnoise.pkl',
+            'GRPhysMLP': 'pregenerated/trained_models/grphysmlp/0.05advnoise.pkl'
         }
     }
 

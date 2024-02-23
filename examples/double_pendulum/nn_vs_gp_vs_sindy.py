@@ -73,22 +73,22 @@ def main():
     # Paths to trained models, for each percentage of noise, with no/yes GPR Denoising
     trained_models = {
         '0.01': {
-            'MLP': 'ugp_denoise/0.01-false-na-na.pkl',
-            'GPMLP': 'ugp_denoise/0.01-true-true-false.pkl',
-            'PhysMLP': 'DEST_FILE/NO_GP_model_0.01noise_sideinfo.pkl',
-            'GPPhysMLP': 'DEST_FILE/model_0.01noise_sideinfo.pkl'
+            'MLP': 'pregenerated/trained_models/mlp/0.01gaussiannoise.pkl',
+            'GPMLP': 'pregenerated/trained_models/gpmlp/0.01gaussiannoise.pkl',
+            'PhysMLP': 'pregenerated/trained_models/physmlp/0.01gaussiannoise.pkl',
+            'GPPhysMLP': 'pregenerated/trained_models/gpphysmlp/0.01gaussiannoise.pkl'
         },
         '0.05': {
-            'MLP': 'ugp_denoise/0.05-false-na-na.pkl',
-            'GPMLP': 'ugp_denoise/0.05-true-true-false.pkl',
-            'PhysMLP': 'DEST_FILE/NO_GP_model_0.05noise_sideinfo.pkl',
-            'GPPhysMLP': 'DEST_FILE/model_0.05noise_sideinfo.pkl'
+            'MLP': 'pregenerated/trained_models/mlp/0.05gaussiannoise.pkl',
+            'GPMLP': 'pregenerated/trained_models/gpmlp/0.05gaussiannoise.pkl',
+            'PhysMLP': 'pregenerated/trained_models/physmlp/0.05gaussiannoise.pkl',
+            'GPPhysMLP': 'pregenerated/trained_models/gpphysmlp/0.05gaussiannoise.pkl'
         },
         '0.1': {
-            'MLP': 'ugp_denoise/0.1-false-na-na.pkl',
-            'GPMLP': 'ugp_denoise/0.1-true-true-false.pkl',
-            'PhysMLP': 'DEST_FILE/NO_GP_model_0.1noise_sideinfo.pkl',
-            'GPPhysMLP': 'DEST_FILE/model_0.1noise_sideinfo.pkl'
+            'MLP': 'pregenerated/trained_models/mlp/0.1gaussiannoise.pkl',
+            'GPMLP': 'pregenerated/trained_models/gpmlp/0.1gaussiannoise.pkl',
+            'PhysMLP': 'pregenerated/trained_models/physmlp/0.1gaussiannoise.pkl',
+            'GPPhysMLP': 'pregenerated/trained_models/gpphysmlp/0.1gaussiannoise.pkl'
         }
     }
 
@@ -122,9 +122,9 @@ def main():
 
     # Paths with the data to train SINDy and GPSINDy with
     sindy_train_paths = {
-        '0.01': 'DEST_FILE/datatrain_noise1prcnt.pkl',
-        '0.05': 'DEST_FILE/datatrain_noise5prcnt.pkl',
-        '0.1': 'DEST_FILE/datatrain_noise10prcnt.pkl'
+        '0.01': 'pregenerated/trajectories/gaussian_noise/0.01.pkl',
+        '0.05': 'pregenerated/trajectories/gaussian_noise/0.05.pkl',
+        '0.1': 'pregenerated/trajectories/gaussian_noise/0.1.pkl'
     }
 
     # Make the comparison for each trained model and SINDy/GPSINDy

@@ -67,13 +67,14 @@ def random_matrix_of_frobenius_norm(norm, shape):
 
 # make_traj_noise = False -> noise of shape (datapoint_size,)
 # make_traj_noise = True -> noise of shape (trajectory_length, datapoint_size)
-def main(max_x_noise, max_weight_noise=0, max_bias_noise=0, make_traj_noise=False):
+# TODO: Implement noising of weights and biases
+def main(max_x_noise, trained_model_path, trajectories_path, max_weight_noise=0, max_bias_noise=0, make_traj_noise=False):
     batch_size = 64
     datapoint_size = 4
     trajectory_length = 300
     max_traj_noise = max_x_noise * math.sqrt(trajectory_length)
 
-    with open('DEST_FILE/base_datatrain_00prcnt.pkl', 'rb') as f:
+    with open(trained_model_path, 'rb') as f:
         trained_model = pickle.load(f)
         # TODO: Make the 4 and 101 dynamic parameters
         idx = len(trained_model.learned_weights) - 1
@@ -81,7 +82,6 @@ def main(max_x_noise, max_weight_noise=0, max_bias_noise=0, make_traj_noise=Fals
         params = trained_model.learned_weights[idx][seed]
     _, _, _, pred_xnext, loss_fun, _, _, loss_fun_constr, _ = build_learner(trained_model.nn_hyperparams[0], trained_model.baseline)
 
-    # TODO: Implement weight and bias noise too
     if make_traj_noise:
         x_noise = random_matrix_of_frobenius_norm(max_traj_noise, (trajectory_length, datapoint_size))
     else:
@@ -89,24 +89,16 @@ def main(max_x_noise, max_weight_noise=0, max_bias_noise=0, make_traj_noise=Fals
 
     optimizer = optax.adam(learning_rate=0.001)
 
-    with open('DEST_FILE/datatrain_noise00prcnt.pkl', 'rb') as f:
+    with open(trajectories_path, 'rb') as f:
         generated_data = pickle.load(f)
         x = generated_data.xTrain
         # This are the next 5 states of any state in xtrain
         xnext = generated_data.xnextTrain
 
-    # TODO: Remove this (it's for testing purposes)
-    # indices_test = jax.random.choice(jax.random.PRNGKey(99), len(x), shape=(batch_size,), replace=False)
-    # r_x_noise_to_add = jnp.asarray([0.01401838, -0.0105391,  -0.00600591,  0.00750609])
-    # result = loss_fn(r_x_noise_to_add, loss_fun, loss_fun_constr, params, xnext[:, indices_test], x[indices_test], 999999)
-    # print("loss", result)
-
     # Initialize the optimizer state
     opt_state = optimizer.init(x_noise)
     real_x_noise = None
 
-    # TODO: More epochs?
-    # TODO: Only 0.2 max_noise was trained 200 epochs.
     if make_traj_noise:
         print("make_traj_noise was set to true, making adv. noise for complete trajectory")
         print(x_noise)
@@ -121,7 +113,7 @@ def main(max_x_noise, max_weight_noise=0, max_bias_noise=0, make_traj_noise=Fals
             print("real_traj_noise[0]", real_traj_noise[0], "norm:", jnp.linalg.norm(real_traj_noise, 'fro') / math.sqrt(trajectory_length))
             print()
 
-        np.save(f'DEST_FILE/worst_perturbations/{max_x_noise}trajmaxnorm.npy', real_traj_noise)
+        np.save(f'pregenerated/worst_perturbations/{max_x_noise}trajmaxnorm.npy', real_traj_noise)
         print("Saved worst perturbation for", max_x_noise, "max traj noise norm in data.")
 
     else:
@@ -140,17 +132,12 @@ def main(max_x_noise, max_weight_noise=0, max_bias_noise=0, make_traj_noise=Fals
             print("real_x_noise", real_x_noise, "norm:", jnp.linalg.norm(real_x_noise))
             print()
 
-        np.save(f'DEST_FILE/worst_perturbations/{max_x_noise}datamaxnorm.npy', real_x_noise)
+        np.save(f'pregenerated/worst_perturbations/{max_x_noise}datamaxnorm.npy', real_x_noise)
         print("Saved worst perturbation for", max_x_noise, "max noise norm in data.")
 
-    
 
-
-
-# main(max_x_noise=0.01)
-# main(max_x_noise=0.03)
-# main(max_x_noise=0.05)
-# main(max_x_noise=0.1)
-# main(max_x_noise=0.2)
-
-main(max_x_noise=0.2, make_traj_noise=True)
+# SPECIFY PARAMETERS HERE:
+main(max_x_noise=0.2, 
+     trained_model_path='pregenerated/trained_models/mlp/no_noise.pkl', 
+     trajectories_path='pregenerated/trajectories/gaussian_noise/no_noise.pkl', 
+     make_traj_noise=True)

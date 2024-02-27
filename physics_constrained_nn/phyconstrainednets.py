@@ -160,16 +160,12 @@ class PhyConstrainedNets(hk.Module):
 		f2 = self._nn_params.get("f2", None)
 		if x is None or self._constraints_dynamics is None:
 			constraints = jnp.array([]), jnp.array([])
-			print("\nNo constraints")
 		elif extra_args is not None:
 			constraints = self._constraints_dynamics(x,u, extra_args=extra_args,**self._unknown_terms)
-			print("There are constraints")
 		else:
 			constraints = self._constraints_dynamics(x,u, **self._unknown_terms)
-			print("There are constraints")
 		
 		key = jax.random.PRNGKey(0)
-		# print(constraint_noise)
 		if constraint_noise > 0.00001:
 			return add_gaussian_noise_tuple(key, constraints, constraint_noise)
 		else:
@@ -448,7 +444,6 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
                         lambda _: 0.0,
                         None)
 						
-		print("loss_fun called")
 		# Return the composite
 		return loss_of_x + grad_reg_term, (m_res, jnp.array([coloc_cost, cTerm_eq, cTerm_ineq]))
 
@@ -560,7 +555,6 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
                         lambda _: 0.0,
                         None)
 		
-		print("loss_fun_constr called")
 		return loss_of_x + grad_reg_term, (m_res, jnp.array([1e-15, cTerm_eq, cTerm_ineq]))
 
 

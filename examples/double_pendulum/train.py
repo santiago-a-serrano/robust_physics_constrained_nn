@@ -331,7 +331,6 @@ def main_fn(path_config_file, extra_args={}):
             max_noise_norm = default_sigma_n
 
             # Build the neural network, the update, loss function and paramters of the neural network structure
-            # TODO: Here I must edit something related with the Lagrange
             rng_gen, opt, (params, m_pen_eq_k, m_pen_ineq_k, m_lagr_eq_k, m_lagr_ineq_k), pred_xnext,\
                 loss_fun, update, update_lagrange, loss_fun_constr, train_with_constraints = build_learner(
                     mParamsNN, type_baseline, constraint_noise=constraint_noise, grad_reg=grad_reg, max_noise_norm=max_noise_norm)

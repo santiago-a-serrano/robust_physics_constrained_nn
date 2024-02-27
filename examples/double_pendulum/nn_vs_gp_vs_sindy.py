@@ -12,7 +12,6 @@ from train import build_learner
 
 from scipy import stats
 
-# TODO: Hide the 95% CI label
 # TODO: Use this code also in the other files, to avoid repeating the plot_avg_accum_error function
 def plot_avg_accum_error(time_index, ground_truths, trajectories_dict, colors_dict, noise_sd):
     plt.figure()

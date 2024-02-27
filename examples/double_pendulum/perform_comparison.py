@@ -234,7 +234,6 @@ def get_sindypi_result(starting_point, equations_str, dt=0.01, steps=100):
     
     return solution.y.T
 
-# TODO: Do they count as squared errors? It's the norm of the errors
 def plot_squared_errors(time_index, ground_truth, trajectories, colors, labels):
     # Just the squared errors:
     plt.figure()
@@ -426,7 +425,6 @@ if __name__ == "__main__":
     m_rng, testTraj, _ = gen_samples(
         m_rng, actual_dt, args.num_traj, args.num_point_in_traj, 1, x_init_lb, x_init_ub, merge_traj=False)
     time_index = [actual_dt * i for i in range(1, args.num_point_in_traj)]
-    # TODO: I need the results of this function for our seed when it's working normally.
 
     # Generate the plots showing the relative error
     list_axes_rel_err = list()

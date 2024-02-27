@@ -46,7 +46,6 @@ def plot_avg_accum_error(time_index, ground_truths, aprch1_noreg, aprch1_withreg
             aprch2_noreg_squared_error[traj_idx][t] = aprch2_noreg_squared_error[traj_idx][t-1] + np.linalg.norm(ground_truths[traj_idx][t] - aprch2_noreg[traj_idx][t])
             aprch2_withreg_squared_error[traj_idx][t] = aprch2_withreg_squared_error[traj_idx][t-1] + np.linalg.norm(ground_truths[traj_idx][t] - aprch2_withreg[traj_idx][t])
 
-    # TODO: Continue from here
     mean_aprch1_noreg = np.mean(aprch1_noreg_squared_error, axis=0)
     mean_aprch1_withreg = np.mean(aprch1_withreg_squared_error, axis=0)
     sem_aprch1_noreg = stats.sem(aprch1_noreg_squared_error, axis=0)

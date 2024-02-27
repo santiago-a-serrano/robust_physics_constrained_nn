@@ -29,7 +29,7 @@ def find_optim_hyperparams(trajectory, big_denoising=False):
     # TODO: Implement better stopping criteria?
     while epoch < 100:
         optimizer.zero_grad()
-        output = model() # TODO: Do I have to pass parameters of some sort?
+        output = model() 
         if best_lml == None or output < best_lml:
             best_lml = output.item()
             best_f = model.theta_f.item()

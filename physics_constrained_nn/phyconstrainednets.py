@@ -41,7 +41,6 @@ class PhyConstrainedNets(hk.Module):
 		"""
 		super().__init__(name=name)
 		# If no known dynamics is given, then nn_params should contains only a single unknown term
-		# TODO: I commented this, I hope it doesn't cause any troubles
 		# assert not (known_dynamics is None and len(nn_params) != 1), ' If no known dynamics is given, then nn_params should contains only a single unknown term'
 		assert ODESolver == 'rk4' or ODESolver == 'base' or type(ODESolver) == dict, 'ODESolver must be either <rk4>, <base>, or a dictionary encoding the parameter of the apriori enclosure term'
 		self._ns = ns
@@ -155,7 +154,6 @@ class PhyConstrainedNets(hk.Module):
 			:param extra_args	: State dependent extra parameters used in side information and constraints
 		"""
 		constraints = None
-		# TODO: Delete the complete value-passing of f1 and f2
 		f1 = self._nn_params.get("f1", None)
 		f2 = self._nn_params.get("f2", None)
 		if x is None or self._constraints_dynamics is None:
@@ -199,7 +197,6 @@ class PhyConstrainedNets(hk.Module):
 
 		raise ('Not implemented')
 
-# TODO: Here is where the loss functions is defined.
 def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, ncontrol, nn_params, ODESolver, 
 								known_dynamics=None, constraints_dynamics=None, pen_l2=1e-4, pen_constr={}, 
 								batch_size=1, extra_args_init=None, train_with_constraints = False, normalize=True,
@@ -430,7 +427,7 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		# hessian_loss_wrt_inputs = batch_hessian(x)
 		# mean_hessian_loss_wrt_inputs = jnp.mean(hessian_loss_wrt_inputs, axis=0)
 
-		# TODO: Actually calculate the hessian.
+		# TODO: Implement the second order term of the Taylor expansion
 		mean_hessian_loss_wrt_inputs = 0
 
 		# Compute the gradient regularization term
@@ -543,7 +540,7 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		# hessian_loss_wrt_inputs = batch_hessian(x)
 		# mean_hessian_loss_wrt_inputs = jnp.mean(hessian_loss_wrt_inputs, axis=0)
 		
-		# TODO: Actually calculate the hessian.
+		# TODO: Implement the second order term of the Taylor expansion
 		mean_hessian_loss_wrt_inputs = 0
 
 		# grad_reg_term = jax.lax.cond(gradient_regularization,
@@ -612,12 +609,3 @@ def build_learner_with_sideinfo(rng_key, optim, model_name, time_step, nstate, n
 		return pen_eq_k * beta_eq, pen_ineq_sq_k * beta_ineq, n_lagr_eq_k, n_lagr_ineq_k
 
 	return (params_init, m_pen_eq_k, m_pen_ineq_k, m_lagr_eq_k, m_lagr_ineq_k), pred_xnext, (loss_fun, loss_fun_constr), (update, update_lagrange)
-
-# def flatmap_to_matrix(flatmap):
-#     if isinstance(flatmap, int):
-#         return [flatmap]
-#     print(flatmap)
-#     # Convert FlatMap to a list of arrays
-#     array_list = [v for nested_flatmap in flatmap.values() for v in nested_flatmap]
-#     print("array list", type(jnp.array(array_list)))
-#     return jnp.array(array_list) # TODO: This is inefficient (converting back and forth). Find a way to avoid it.

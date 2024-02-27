@@ -158,10 +158,6 @@ class PhyConstrainedNets(hk.Module):
 		# TODO: Delete the complete value-passing of f1 and f2
 		f1 = self._nn_params.get("f1", None)
 		f2 = self._nn_params.get("f2", None)
-		print("\nExtra args:", extra_args)
-		print("\nUnknown terms:", self._unknown_terms)
-		# print("\nVector field:", self._unknown_terms['vector_field'][0])
-		print("\n", x, self._constraints_dynamics)
 		if x is None or self._constraints_dynamics is None:
 			constraints = jnp.array([]), jnp.array([])
 			print("\nNo constraints")

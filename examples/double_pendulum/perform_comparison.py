@@ -145,7 +145,6 @@ def generate_rel_error(util_fun, params, xtrue, indx_traj=0):
     for seed, params_val in sorted(params.items()):
         # The initial point are all initial point in the given trajectories
         init_value = xtrue[:, 0, :]
-        print("init_value", init_value)
         # Then we estimate the future time step
         for i, l_res_value in tqdm(zip(range(1, xtrue.shape[1]), res_value), total=len(res_value), leave=False):
             init_value, _, _, _, _, _ = pred_xnext(params_val, init_value)
@@ -300,7 +299,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Load the data
-    print("ARGS.LOGDIRS ARE THE FOLLOWING", args.logdirs)
     m_logs, m_pred_loss = load_files(args.logdirs)
     actual_dt = m_logs[0].nn_hyperparams[0].actual_dt
     n_state = m_logs[0].sampleLog.n_state
@@ -517,7 +515,6 @@ if __name__ == "__main__":
     time_index = [actual_dt * i for i in range(args.num_point_in_traj)]
     true_state_evol = testTraj[args.indx_traj_test]
     m_seed = next(iter(mStateEvol[next(iter(mStateEvol))]))
-    print("STARTING POINT: ", true_state_evol[0])
     sindy_result = None
     sindy_color = 'grey'
     gpsindy_result = None
@@ -589,7 +586,6 @@ if __name__ == "__main__":
         tikzplotlib.save(dir_save+'/state_{}.tex'.format(i))
         plt.savefig(dir_save+'/state_{}.png'.format(i),
                     dpi=300, transparent=True)
-        print(m_seed)
     plt.show()
 
     # Plot the squared errors of the argument and benchmark trajectories

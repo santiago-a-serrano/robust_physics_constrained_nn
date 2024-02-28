@@ -1,25 +1,47 @@
-# Neural Networks with Physics-Informed Architectures and Constraints for Dynamical Systems Modeling
+# Robust Neural Network-Based Discovery of Dynamical Systems
 
-This module builds custom deep neural networks to learn dynamics when prior physics knowledge and constraints about the underlying unknown dynamics are considered. 
-The corresponding paper can be found [here](https://arxiv.org/pdf/2109.06407.pdf).
+This module builds on top of [Djemou _et al_'s](https://github.com/wuwushrek/physics_constrained_nn) work in order to implement techniques that allow for more robustness against noise in the training data for the discovery of dynamics. The corresponding draft of the paper can be found [here](Paper.pdf).
 
 ## Installation
 
 The code is written both in C++ and Python.
 
-### Quick Installation
+This package requires [``jax``](https://github.com/google/jax) to be installed. The package further requires [``dm-haiku``](https://github.com/deepmind/dm-haiku) for neural networks in jax and [``optax``](https://github.com/deepmind/optax) a gradient processing and optimization library for JAX.
 
+However, there are some incompatibilities between versions of packages that are used for different purposes. Two requirements.txt files are included, with the intention of them being used for the creation of two virtual environments. Both virtual environments were used along with Python 3.10.12, although more recent versions will probably also work.
 
-This package requires [``jax``](https://github.com/google/jax) to be installed: The choice of CPU or GPU version depends on the user but the CPU is installed by default along with the package.
-The package further requires [``dm-haiku``](https://github.com/deepmind/dm-haiku) for neural networks in jax and [``optax``](https://github.com/deepmind/optax) a gradient processing and optimization library for JAX, and [``Brax``](https://github.com/google/brax) :  a differentiable physics engine that simulates environments made up of rigid bodies, joints, and actuators. The following commands install everything that is required (except for the GPU version of JAX which must be installed manually):
-
+## Installation Steps
+### 1. Create two virtual environments, "default"  and "gen".
+The "default" environment will be used for running most scripts, while "gen" will be used for generating training data (trajectories). More information on that follows.
 ```
-git clone https://github.com/wuwushrek/physics_constrained_nn.git
+python3 -m venv default
+source default/bin/activate # Unix/Linux/macOS
+default\Scripts\activate # Windows
+pip install -r requirements_default.txt
+deactivate
+```
+```
+python3 -m venv gen
+source gen/bin/activate # Unix/Linux/macOS
+gen\Scripts\activate # Windows
+pip install -r requirements_gen.txt
+deactivate
+```
+You can later activate any of the two environments with 
+```
+source envname/bin/activate # Unix/Linux/macOS
+envname\Scripts\activate # Windows
+```
+
+### 2. Clone this repo and install physics_constrained_nn
+You can do it by running the following commands in the terminal:
+```
+git clone https://github.com/santiago-a-serrano/robust_physics_constrained_nn.git
 cd physics_constrained_nn/
 python3 -m pip install -e . 
 ```
 
-### Detailed Installation
+### 3. MuJoCo
 
 This package implements several jax primitives in C++ of ``MuJoCo`` functions that can be used as prior physics knowledge. Then it uses [``pybind11``]() to import the primitives and use it in Python. To include such primitives, ``MuJoCo`` needs to be installed on the target computer with a valid activation key. 
 
@@ -36,47 +58,58 @@ Finally, install the following dependencies to compile the C++ code
 sudo apt install build-essential libomp-dev
 ```
 
-#### Brax Experiments
-Follow [the installation procedure](https://github.com/google/brax) to install ``brax`` :  a differentiable physics engine that simulates environments made up of rigid bodies, joints, and actuators.
-
-
 ## Examples
 
-### Double Pendulum Training
+### Generate data (trajectories)
 
-To first generate the data required to train the neural network, modify the ``dataset_gen.yaml`` file inside the double pendulum file and generate the dataset as follows:
+To first generate the data required to train the neural network, modify the ``dataset_gen.yaml`` file inside the ``physics_constrained_nn/examples/double_pendulum`` directory and generate the dataset as follows:
 ```
 cd physics_constrained_nn/examples/double_pendulum
-python generate_sample.py --cfg dataset_gen.yaml --output_file DEST_FILE/datatrain
+python generate_sample.py --cfg dataset_gen.yaml --output_file generated/trajectories/traj_name
 ```
 
-After the files has been generated, modify the parameters of your training from ``nets_params.yaml`` and proceed to the training as follows
+### Training
+
+After the file has been generated, modify the parameters of your training from ``nets_params.yaml`` and proceed to the training as follows:
 ```
-python train.py --cfg nets_params.yaml --input_file DEST_FILE/datatrain.pkl --output_file DEST_FILE/base_datatrain_si0 --baseline base --side_info 0
+python train.py --cfg nets_params.yaml --input_file generated/trajectories/traj_name.pkl --output_file generated/trained_models/model_name --baseline base --side_info 0
 ```
 where the baseline is either `base` or `rk4` and the side info is either `0` (no side information), `1` (structural knowledge of vector field), and `2` (structural knowledge + symmetry constraints).
 
-Finally, to plot the results, execute the command line
-```
-python perform_comparison.py --logdirs DEST_FILE/base_datatrain_si0 DEST_FILE/base_datatrain_si1 ... --legend 'No SI' 'Si 2' ... --colors red green ... --num_traj 100 --num_point_in_traj 100 --seed 5 --show_constraints --window 5
-```
-
-### Brax Environment Training
-
-The training is performed similarly to the Double pendulum training. In the `examples/brax` file, there is a list of files associated to each Brax environments. To generate the data for training on the `reacher` environment for example, execute the following
-```
-cd physics_constrained_nn/examples/brax
-python generate_sample.py --cfg reacher_brax/dataset_gen.yaml --output_file DEST_FILE/datatrain
-```
-
-After the files has been generated, modify the parameters of your training from ``reacher_brax/nets_params.yaml`` and proceed to the training as follows
-
-```
-python train.py --cfg reacher_brax/nets_params.py --input_file DEST_FILE/datatrain.pkl --output_file DEST_FILE/base_datatrain_si0 --baseline base --side_info 0
-```
-where the baseline is either `base` or `rk4` and the side info is either `0` (no side information), `1` (structural knowledge of vector field), and `2` (structural knowledge + symmetry constraints).
+### Model comparison
 
 Finally, to plot the results, execute the command line
 ```
-python perform_comparison.py --logdirs DEST_FILE/base_datatrain_si0 DEST_FILE/base_datatrain_si1 ... --legend 'No SI' 'Si 2' ... --colors red green ... --num_traj 100 --num_point_in_traj 100 --seed 5 --show_constraints --window 5
+python perform_comparison.py --logdirs generated/trained_models/model_name1.pkl generated/trained_models/model_name2.pkl ... --legend 'Model 1' 'Model 2' ... --colors red green ... --num_traj 100 --num_point_in_traj 100 --seed 5 --show_constraints --window 5
 ```
+
+### Other comparisons
+
+Other comparisons, like the ones shown in the paper, can be achieved through the following scripts inside the ``physics_constrained_nn/examples/double_pendulum/`` directory.
+
+* ``adv_noise_comparison.py`` compares the accumulated error of 4 approaches (with various levels of adversarial noise):
+    * A1 with and without gradient regulatization.
+    * A2 with and without gradient regularization.
+(See paper for A1 and A2 definitions).
+* ``nn_vs_gp_vs_sindy.py`` compares the accumulated error of SINDy, GPSINDy, and four chosen trained models.
+* ``nn_vs_gradregnn.py`` compares the accumulated error of four chosen trained models.
+* ``no_gpr_vs_gpr.py`` compares the accumulated error of a basic neural network and that network but with Gaussian Process regression.
+* ``sindy_vs_gpsindy.py`` compares the accumulated error of SINDy and GPSINDy for the specified noise level.
+
+### Adversarial noise generation
+``adversarial_noise_finder.py`` generates the adversarial noise that can be later specified in ``dataset_gen.yaml``.
+
+Four parameters must be specified at the end of the file, when calling the ``main`` function:
+1. ∥ϵ∥ (``max_x_noise``).
+2. The model to generate adversarial noise against (``trained_model_path``).
+3. Trajectories (input data) to be used when generating the noise (``trajectories_path``).
+4. If A1 (``False``) or A2 (``True``) is to be implemented (``make_traj_noise``).
+
+
+# TODO: EXPLAIN THE MAIN FUNCTIONS OF EVERY SCRIPT, AND HOW THEY MUST BE CALLED. EXPLAIN WHAT MUST BE MODIFIED FOR THE SCRIPTS TO WORK CUSTOMIZEDLY.
+
+## Pregenerated Files
+In order to help save training and data generation time/computing, some pregenerated trajectories, trained models, and adversarial noise are available under ``physics_constrained_nn/examples/double_pendulum/pregenerated/``.
+
+### Suggested Extension (optional)
+The pregenerated file formats can be pre-visualized within VS Code with the ``vscode-pydata-viewer`` extension. Although it is not necessary to visualize them in order to use them, it may be helpful to understand them better.

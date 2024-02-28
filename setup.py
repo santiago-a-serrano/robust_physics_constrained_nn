@@ -20,5 +20,4 @@ setup(
     url="https://github.com/wuwushrek/physics_constrained_nn.git",
     packages=['physics_constrained_nn'],
     package_dir={'physics_constrained_nn': 'physics_constrained_nn'},
-    install_requires=_parse_requirements('requirements.txt'),
 )

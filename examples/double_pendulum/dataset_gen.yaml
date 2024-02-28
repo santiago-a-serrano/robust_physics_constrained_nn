@@ -5,7 +5,7 @@
 gaussian_noise: 0.00
 
 # Adversarial training data noise, it's put to every datapoint (location) or trajectory, depending on how was it generated
-adv_noise: DEST_FILE/worst_perturbations/0.005trajmaxnorm.npy
+adv_noise: pregenerated/worst_perturbations/no_perturbation.npy
 
 # The time step in the environment
 time_step: 0.01

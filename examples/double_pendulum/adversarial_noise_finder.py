@@ -113,7 +113,7 @@ def main(max_x_noise, trained_model_path, trajectories_path, max_weight_noise=0,
             print("real_traj_noise[0]", real_traj_noise[0], "norm:", jnp.linalg.norm(real_traj_noise, 'fro') / math.sqrt(trajectory_length))
             print()
 
-        np.save(f'pregenerated/worst_perturbations/{max_x_noise}trajmaxnorm.npy', real_traj_noise)
+        np.save(f'generated/worst_perturbations/{max_x_noise}trajmaxnorm.npy', real_traj_noise)
         print("Saved worst perturbation for", max_x_noise, "max traj noise norm in data.")
 
     else:
@@ -132,7 +132,7 @@ def main(max_x_noise, trained_model_path, trajectories_path, max_weight_noise=0,
             print("real_x_noise", real_x_noise, "norm:", jnp.linalg.norm(real_x_noise))
             print()
 
-        np.save(f'pregenerated/worst_perturbations/{max_x_noise}datamaxnorm.npy', real_x_noise)
+        np.save(f'generated/worst_perturbations/{max_x_noise}datamaxnorm.npy', real_x_noise)
         print("Saved worst perturbation for", max_x_noise, "max noise norm in data.")
 
 

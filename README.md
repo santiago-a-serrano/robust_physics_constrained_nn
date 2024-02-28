@@ -37,8 +37,8 @@ deactivate
 ```
 You can later activate any of the two environments with 
 ```
-source env_path/bin/activate # Unix/Linux/macOS
-env_path\Scripts\activate # Windows
+source environment_path/bin/activate # Unix/Linux/macOS
+environment_path\Scripts\activate # Windows
 ```
 
 ### 3. MuJoCo

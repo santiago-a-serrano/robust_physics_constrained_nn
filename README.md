@@ -11,7 +11,7 @@ This package requires [``jax``](https://github.com/google/jax) to be installed. 
 However, there are some incompatibilities between versions of packages that are used for different purposes. Two requirements.txt files are included, with the intention of them being used for the creation of two virtual environments. Both virtual environments were used along with Python 3.10.12, although more recent versions will probably also work.
 
 ## Installation Steps
-### 1. Clone this repo and install physics_constrained_nn
+### 1. Clone this repo and install robust_physics_constrained_nn
 You can do it by running the following commands in the terminal:
 ```
 git clone https://github.com/santiago-a-serrano/robust_physics_constrained_nn.git
@@ -62,9 +62,9 @@ sudo apt install build-essential libomp-dev
 
 ### Generate data (trajectories)
 
-To first generate the data required to train the neural network, modify the ``dataset_gen.yaml`` file inside the ``physics_constrained_nn/examples/double_pendulum`` directory and generate the dataset as follows:
+To first generate the data required to train the neural network, modify the ``dataset_gen.yaml`` file inside the ``robust_physics_constrained_nn/examples/double_pendulum`` directory and generate the dataset as follows:
 ```
-cd physics_constrained_nn/examples/double_pendulum
+cd robust_physics_constrained_nn/examples/double_pendulum
 python generate_sample.py --cfg dataset_gen.yaml --output_file generated/trajectories/traj_name
 ```
 
@@ -85,7 +85,7 @@ python perform_comparison.py --logdirs generated/trained_models/model_name1.pkl 
 
 ### Other comparisons
 
-Other comparisons, like the ones shown in the paper, can be achieved through the following scripts inside the ``physics_constrained_nn/examples/double_pendulum/`` directory.
+Other comparisons, like the ones shown in the paper, can be achieved through the following scripts inside the ``robust_physics_constrained_nn/examples/double_pendulum/`` directory.
 
 * ``adv_noise_comparison.py`` compares the accumulated error of 4 approaches (with various levels of adversarial noise):
     * A1 with and without gradient regulatization.
@@ -115,7 +115,7 @@ To generate the noise, just run the script.
 
 
 ## Pregenerated Files
-In order to help save training and data generation time/computing, some pregenerated trajectories, trained models, and adversarial noise are available under ``physics_constrained_nn/examples/double_pendulum/pregenerated/``.
+In order to help save training and data generation time/computing, some pregenerated trajectories, trained models, and adversarial noise are available under ``robust_physics_constrained_nn/examples/double_pendulum/pregenerated/``.
 
 ### Suggested Extension (optional)
 The pregenerated file formats can be pre-visualized within VS Code with the ``vscode-pydata-viewer`` extension. Although it is not necessary to visualize them in order to use them, it may be helpful to understand them better.

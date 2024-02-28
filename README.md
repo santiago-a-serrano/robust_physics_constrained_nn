@@ -15,7 +15,7 @@ However, there are some incompatibilities between versions of packages that are 
 You can do it by running the following commands in the terminal:
 ```
 git clone https://github.com/santiago-a-serrano/robust_physics_constrained_nn.git
-cd physics_constrained_nn/
+cd robust_physics_constrained_nn/
 python3 -m pip install -e . 
 ```
 

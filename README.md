@@ -11,7 +11,15 @@ This package requires [``jax``](https://github.com/google/jax) to be installed. 
 However, there are some incompatibilities between versions of packages that are used for different purposes. Two requirements.txt files are included, with the intention of them being used for the creation of two virtual environments. Both virtual environments were used along with Python 3.10.12, although more recent versions will probably also work.
 
 ## Installation Steps
-### 1. Create two virtual environments, "default"  and "gen".
+### 1. Clone this repo and install physics_constrained_nn
+You can do it by running the following commands in the terminal:
+```
+git clone https://github.com/santiago-a-serrano/robust_physics_constrained_nn.git
+cd physics_constrained_nn/
+python3 -m pip install -e . 
+```
+
+### 2. Create two virtual environments, "default"  and "gen".
 The "default" environment will be used for running most scripts, while "gen" will be used for generating training data (trajectories). More information on that follows.
 ```
 python3 -m venv default
@@ -31,14 +39,6 @@ You can later activate any of the two environments with
 ```
 source envname/bin/activate # Unix/Linux/macOS
 envname\Scripts\activate # Windows
-```
-
-### 2. Clone this repo and install physics_constrained_nn
-You can do it by running the following commands in the terminal:
-```
-git clone https://github.com/santiago-a-serrano/robust_physics_constrained_nn.git
-cd physics_constrained_nn/
-python3 -m pip install -e . 
 ```
 
 ### 3. MuJoCo

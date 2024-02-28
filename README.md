@@ -91,10 +91,16 @@ Other comparisons, like the ones shown in the paper, can be achieved through the
     * A1 with and without gradient regulatization.
     * A2 with and without gradient regularization.
 (See paper for A1 and A2 definitions).
+    * The trained models can be specified by changing the default values of the ``trained_models`` variable. Some other parameters (that won't have to be modified in most cases) can be modified as needed in the first lines of the ``main`` function. 
 * ``nn_vs_gp_vs_sindy.py`` compares the accumulated error of SINDy, GPSINDy, and four chosen trained models.
+    * The trained models can be specified by changing the default values of the ``trained_models`` variable. The optimized hyperparameters for the Gaussian Process regression must be specified in ``optimized_hyperparams``. The paths of the data to train SINDy and GPSINDy with can be specified in ``sindy_train_paths``. Some other parameters (that won't have to be modified in most cases) can be modified as needed in the first lines of the ``main`` function. 
 * ``nn_vs_gradregnn.py`` compares the accumulated error of four chosen trained models.
+    * The trained models can be specified by changing the default values of the ``trained_models`` variable. Some other parameters (that won't have to be modified in most cases) can be modified as needed in the first lines of the ``main`` function. 
 * ``no_gpr_vs_gpr.py`` compares the accumulated error of a basic neural network and that network but with Gaussian Process regression.
+    * The trained models can be specified by changing the default values of the ``trained_models`` variable. Some other parameters (that won't have to be modified in most cases) can be modified as needed in the first lines of the ``main`` function. 
 * ``sindy_vs_gpsindy.py`` compares the accumulated error of SINDy and GPSINDy for the specified noise level.
+    * Most important parameters will be asked as input in the terminal as the script runs. Some other parameters (that won't have to be modified in most cases) can be modified as needed in the first lines of the ``main`` function. 
+
 
 ### Adversarial noise generation
 ``adversarial_noise_finder.py`` generates the adversarial noise that can be later specified in ``dataset_gen.yaml``.
@@ -105,8 +111,8 @@ Four parameters must be specified at the end of the file, when calling the ``mai
 3. Trajectories (input data) to be used when generating the noise (``trajectories_path``).
 4. If A1 (``False``) or A2 (``True``) is to be implemented (``make_traj_noise``).
 
+To generate the noise, just run the script.
 
-# TODO: EXPLAIN THE MAIN FUNCTIONS OF EVERY SCRIPT, AND HOW THEY MUST BE CALLED. EXPLAIN WHAT MUST BE MODIFIED FOR THE SCRIPTS TO WORK CUSTOMIZEDLY.
 
 ## Pregenerated Files
 In order to help save training and data generation time/computing, some pregenerated trajectories, trained models, and adversarial noise are available under ``physics_constrained_nn/examples/double_pendulum/pregenerated/``.

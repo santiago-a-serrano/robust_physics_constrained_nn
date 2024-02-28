@@ -16,20 +16,20 @@ You can do it by running the following commands in the terminal:
 ```
 git clone https://github.com/santiago-a-serrano/robust_physics_constrained_nn.git
 cd robust_physics_constrained_nn/
-python3 -m pip install -e . 
+python -m pip install -e . 
 ```
 
 ### 2. Create two virtual environments, "default"  and "gen"
 The "default" environment will be used for running most scripts, while "gen" will be used for generating training data (trajectories). More information on that follows.
 ```
-python3 -m venv default
+python -m venv default
 source default/bin/activate # Unix/Linux/macOS
 default\Scripts\activate # Windows
 pip install -r requirements_default.txt
 deactivate
 ```
 ```
-python3 -m venv gen
+python -m venv gen
 source gen/bin/activate # Unix/Linux/macOS
 gen\Scripts\activate # Windows
 pip install -r requirements_gen.txt

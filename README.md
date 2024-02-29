@@ -20,7 +20,7 @@ python -m pip install -e .
 ```
 
 ### 2. Create two virtual environments, "default"  and "gen"
-The "default" environment will be used for running most scripts, while "gen" will be used for generating training data (trajectories). More information on that follows. If coming from the first step, you may want to get out of robust_physics_constrained_nn with ``cd ..``.
+The "default" environment will be used for running most scripts, while "gen" will be used for generating training data (trajectories). More information on that follows.
 ```
 python -m venv default
 source default/bin/activate # Unix/Linux/macOS

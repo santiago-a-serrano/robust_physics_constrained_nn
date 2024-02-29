@@ -8,7 +8,7 @@ The code is written both in C++ and Python.
 
 This package requires [``jax``](https://github.com/google/jax) to be installed. The package further requires [``dm-haiku``](https://github.com/deepmind/dm-haiku) for neural networks in jax and [``optax``](https://github.com/deepmind/optax) a gradient processing and optimization library for JAX.
 
-However, there are some incompatibilities between versions of packages that are used for different purposes. Two requirements.txt files are included, with the intention of them being used for the creation of two virtual environments. Both virtual environments were used along with Python 3.10.12, although more recent versions will probably also work.
+However, there are some incompatibilities between versions of packages that are used for different purposes. Two requirements.txt files are included, with the intention of them being used for the creation of two virtual environments. Both virtual environments were used along with Python 3.10.12, which I highly recommend using too to avoid conflicts.
 
 ## Installation Steps
 ### 1. Clone this repo and install robust_physics_constrained_nn

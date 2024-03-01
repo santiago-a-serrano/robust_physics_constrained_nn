@@ -23,8 +23,8 @@ The "default" environment will be used for running most scripts, while "gen" wil
 python3.10 -m venv default
 source default/bin/activate # Unix/Linux/macOS
 default\Scripts\activate # Windows
-pip install -r requirements_default.txt
 cd robust_physics_constrained_nn/
+pip install -r requirements_default.txt
 python3.10 -m pip install -e . 
 deactivate
 ```
@@ -32,8 +32,8 @@ deactivate
 python3.10 -m venv gen
 source gen/bin/activate # Unix/Linux/macOS
 gen\Scripts\activate # Windows
-pip install -r requirements_gen.txt
 cd robust_physics_constrained_nn/
+pip install -r requirements_gen.txt
 python3.10 -m pip install -e . 
 deactivate
 ```

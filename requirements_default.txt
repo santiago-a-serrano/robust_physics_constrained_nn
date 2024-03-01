@@ -11,9 +11,9 @@ optax @ git+https://github.com/google-deepmind/optax@b7ff8ac43b59b27e4db28769995
 pysindy==1.7.5
 PyYAML==6.0.1
 scipy==1.11.4
-setuptools==59.6.0
+setuptools>=69.1.1
 sympy==1.12
 tikzplotlib==0.10.1
 torch==2.1.0
 tqdm==4.66.1
-wheel==0.41.2
+wheel>=0.42.0

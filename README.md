@@ -29,6 +29,7 @@ python3.10 -m pip install -e .
 deactivate
 ```
 ```
+cd ..
 python3.10 -m venv gen
 source gen/bin/activate # Unix/Linux/macOS
 gen\Scripts\activate # Windows

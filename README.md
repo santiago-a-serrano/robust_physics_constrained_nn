@@ -17,7 +17,7 @@ You can do it by running the following command in the terminal:
 git clone https://github.com/santiago-a-serrano/robust_physics_constrained_nn.git
 ```
 
-### 2. Create two virtual environments, "default"  and "gen", and install the requirements (including physics_constrained_nn)
+### 2. Create two virtual environments, "default"  and "gen", and install the requirements (including robust_physics_constrained_nn)
 The "default" environment will be used for running most scripts, while "gen" will be used for generating training data (trajectories). More information on that follows.
 ```
 python3.10 -m venv default

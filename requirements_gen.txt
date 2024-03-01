@@ -11,6 +11,7 @@ optax==0.1.7
 pysindy==1.7.5
 PyYAML==6.0.1
 scipy==1.11.4
+setuptools==59.6.0
 sympy==1.12
 tikzplotlib==0.10.1
 torch==2.1.0

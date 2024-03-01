@@ -3,14 +3,13 @@ dm_haiku==0.0.12
 flax==0.7.5
 jax==0.4.20
 jaxlib==0.4.20
-matplotlib==3.1.0
+matplotlib>=3.8.3
 numdifftools==0.9.41
 numpy==1.23.1
 optax @ git+https://github.com/google-deepmind/optax@b7ff8ac43b59b27e4db28769995aade577ce4f99
 pysindy==1.7.5
 PyYAML==6.0.1
 scipy==1.11.4
-setuptools==59.6.0
 sympy==1.12
 tikzplotlib==0.10.1
 torch==2.1.0

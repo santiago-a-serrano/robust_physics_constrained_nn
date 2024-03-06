@@ -65,7 +65,7 @@ python generate_sample.py --cfg dataset_gen.yaml --output_file generated/traject
 
 Remember to use the "gen" virtual environment. After this, everything else can be done with the "default" environment.
 
-⚠️ If you get a `FileNotFoundError`, see [Common Error Troubleshooting](##common-error-troubleshooting)
+⚠️ If you get a `FileNotFoundError`, see [Common Error Troubleshooting](#common-error-troubleshooting)
 
 ### Training
 

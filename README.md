@@ -85,7 +85,7 @@ python perform_comparison.py --logdirs generated/trained_models/model_name1.pkl 
 
 ### Other comparisons
 
-Other comparisons, like the ones shown in the paper, can be achieved through the following scripts inside the `robust_physics_constrained_nn/examples/double_pendulum/` directory.
+Other comparisons, like the ones shown in the paper, can be achieved by running the following scripts inside the `robust_physics_constrained_nn/examples/double_pendulum/` directory.
 
 - `adv_noise_comparison.py` compares the accumulated error of 4 approaches (with various levels of adversarial noise):
   _ A1 with and without gradient regulatization.

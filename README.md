@@ -118,10 +118,10 @@ To generate the noise, just run the script.
 
 In order to help save training and data generation time/computing, some pregenerated trajectories, trained models, and adversarial noise are available under `robust_physics_constrained_nn/examples/double_pendulum/pregenerated/`.
 
-### Suggested Extension (optional)
+## Suggested Extension (optional)
 
 The pregenerated file formats can be pre-visualized within VS Code with the `vscode-pydata-viewer` extension. Although it is not necessary to visualize them in order to use them, it may be helpful to understand them better.
 
-### Common Error Troubleshooting
+## Common Error Troubleshooting
 
 - ```FileNotFoundError: [Errno 2] No such file or directory```: This error will very likely occur because the directory specified has not been created yet. As Git doesn't store empty directories, you'll have to create the `robust_physics_constrained_nn\examples\double_pendulum\generated` directory and subdirectories that are default in the code and terminal examples. 

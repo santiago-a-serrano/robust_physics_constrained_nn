@@ -63,7 +63,7 @@ cd robust_physics_constrained_nn/examples/double_pendulum
 python generate_sample.py --cfg dataset_gen.yaml --output_file generated/trajectories/traj_name
 ```
 
-Remember to use the "gen" virtual environment. After this, everything else can be done with the "default" environment.
+Remember to use the "gen" virtual environment. After this, everything else should be done with the "default" environment.
 
 ⚠️ If you get a `FileNotFoundError`, see [Common Error Troubleshooting](#common-error-troubleshooting).
 

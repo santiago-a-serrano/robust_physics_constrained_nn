@@ -124,4 +124,4 @@ The pregenerated file formats can be pre-visualized within VS Code with the `vsc
 
 ### Common Error Troubleshooting
 
-- ```FileNotFoundError: [Errno 2] No such file or directory```: This error will very likely occur because the directory specified has not been created yet. As Git doesn't store empty directories, you'll have to create the 'robust_physics_constrained_nn\examples\double_pendulum\generated' directory and subdirectories that are default in the code and terminal examples. 
+- ```FileNotFoundError: [Errno 2] No such file or directory```: This error will very likely occur because the directory specified has not been created yet. As Git doesn't store empty directories, you'll have to create the `robust_physics_constrained_nn\examples\double_pendulum\generated` directory and subdirectories that are default in the code and terminal examples. 

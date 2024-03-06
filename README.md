@@ -99,6 +99,7 @@ Other comparisons, like the ones shown in the paper, can be achieved through the
   - The trained models can be specified by changing the default values of the `trained_models` variable. Some other parameters (that won't have to be modified in most cases) can be modified as needed in the first lines of the `main` function.
 - `sindy_vs_gpsindy.py` compares the accumulated error of SINDy and GPSINDy for the specified noise level.
   - Most important parameters will be asked as input in the terminal as the script runs. Some other parameters (that won't have to be modified in most cases) can be modified as needed in the first lines of the `main` function.
+  - The file itself contains a comment with already-optimized hyperparameters that you can use for various levels of Gaussian noise.
 
 ### Adversarial noise generation
 

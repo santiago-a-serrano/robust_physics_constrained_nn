@@ -48,9 +48,11 @@ deactivate
 You can later activate any of the two environments with
 
 ```
+deactivate # Run this previously to deactivate the current environment
 source environment_path/bin/activate # Unix/Linux/macOS
 environment_path\Scripts\activate # Windows
 ```
+
 
 ## Usage
 

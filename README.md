@@ -30,7 +30,7 @@ source default/bin/activate # Unix/Linux/macOS
 default\Scripts\activate # Windows
 cd robust_physics_constrained_nn/
 pip install -r requirements_default.txt
-python3.10 -m pip install -e .
+python -m pip install -e .
 deactivate
 ```
 
@@ -41,7 +41,7 @@ source gen/bin/activate # Unix/Linux/macOS
 gen\Scripts\activate # Windows
 cd robust_physics_constrained_nn/
 pip install -r requirements_gen.txt
-python3.10 -m pip install -e .
+python -m pip install -e .
 deactivate
 ```
 

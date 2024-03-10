@@ -295,7 +295,7 @@ def main_fn(path_config_file, extra_args={}):
     (_, num_traj_data, trajectory_length) = mSampleLog.disable_substep
     coloc_set = jnp.array(coloc_set)
     if perform_gp_denoising:
-        xTrainList, xnextTrainList = denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, 5, optimize_hyperparams, big_denoising, default_sigma_n=default_sigma_n)
+        xTrainList, xnextTrainList = denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, 5, optimize_hyperparams, big_denoising)
         print("Gaussian Process Denoising enabled")
     else:
         print("Gaussian Process Denoising disabled")

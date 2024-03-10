@@ -48,9 +48,11 @@ deactivate
 You can later activate any of the two environments with
 
 ```
+deactivate # Run this previously to deactivate the current environment
 source environment_path/bin/activate # Unix/Linux/macOS
 environment_path\Scripts\activate # Windows
 ```
+
 
 ## Usage
 
@@ -63,7 +65,9 @@ cd robust_physics_constrained_nn/examples/double_pendulum
 python generate_sample.py --cfg dataset_gen.yaml --output_file generated/trajectories/traj_name
 ```
 
-Remember to use the "gen" virtual environment. After this, everything else can be done with the "default" environment.
+Remember to use the "gen" virtual environment. After this, everything else should be done with the "default" environment.
+
+⚠️ If you get a `FileNotFoundError`, see [Common Error Troubleshooting](#common-error-troubleshooting).
 
 ### Training
 

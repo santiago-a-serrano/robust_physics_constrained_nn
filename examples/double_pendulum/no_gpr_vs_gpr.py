@@ -28,6 +28,7 @@ def print_trajectories(testTraj, n_state, actual_dt, num_traj):
         plt.legend()
         plt.show()
 
+# Plot the average accumulated error (and its confidence interval) for the trajectories passed
 def plot_avg_accum_error(time_index, ground_truths, nogpr_trajectories, gpr_trajectories, noise_sd):
     if len(ground_truths) != len(nogpr_trajectories) or len(ground_truths) != len(gpr_trajectories):
         raise ValueError("The lengths of ground_truths, nogpr_trajectories, and gpr_trajectories must be the same.")
@@ -37,6 +38,8 @@ def plot_avg_accum_error(time_index, ground_truths, nogpr_trajectories, gpr_traj
 
     plt.figure()
     plt.title(f"Accumulated Error | Noise σ={noise_sd}")
+
+    # Calculate the accumulated error for all models and all trajectories
     nogpr_squared_error = np.zeros((len(ground_truths), len(ground_truths[0])))
     gpr_squared_error = np.zeros((len(ground_truths), len(ground_truths[0])))
     for traj_idx in range(len(ground_truths)):
@@ -45,17 +48,21 @@ def plot_avg_accum_error(time_index, ground_truths, nogpr_trajectories, gpr_traj
         for t in range(1, len(ground_truths[0])):
             nogpr_squared_error[traj_idx][t] = nogpr_squared_error[traj_idx][t-1] + np.linalg.norm(ground_truths[traj_idx][t] - nogpr_trajectories[traj_idx][t])
             gpr_squared_error[traj_idx][t] = gpr_squared_error[traj_idx][t-1] + np.linalg.norm(ground_truths[traj_idx][t] - gpr_trajectories[traj_idx][t])
+
+    # Get the mean (and standard error) of the squared errors (mean of all trajectories)
     mean_nogpr = np.mean(nogpr_squared_error, axis=0)
     mean_gpr = np.mean(gpr_squared_error, axis=0)
     sem_nogpr = stats.sem(nogpr_squared_error, axis=0)
     sem_gpr = stats.sem(gpr_squared_error, axis=0)
 
+    # Perform calculations needed for plotting the confidence intervals
     confidence_level = 0.95
     degrees_freedom = len(ground_truths) - 1
     t_critical = stats.t.ppf((1 + confidence_level) / 2, degrees_freedom)
     margin_of_error_nogpr = t_critical * sem_nogpr
     margin_of_error_gpr = t_critical * sem_gpr
 
+    # Plot the mean accumulated errors with their corresponding confidence intervals
     plt.plot(time_index, mean_nogpr, color='red', label='No GPR')
     plt.plot(time_index, mean_gpr, color='orange', label='With GPR')
     plt.fill_between(time_index, mean_nogpr - margin_of_error_nogpr, mean_nogpr + margin_of_error_nogpr, 
@@ -68,6 +75,7 @@ def plot_avg_accum_error(time_index, ground_truths, nogpr_trajectories, gpr_traj
     plt.legend()
     plt.show()
 
+# Use the trained model passed as argument to make predictions
 def gen_trajectory_evolution(trained_model_file, testTraj, num_traj):
     with open(trained_model_file, 'rb') as f:
         model = pickle.load(f)

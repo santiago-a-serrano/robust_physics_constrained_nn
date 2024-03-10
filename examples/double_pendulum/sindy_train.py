@@ -9,6 +9,7 @@ from pysindy.feature_library import PolynomialLibrary, FourierLibrary, ConcatLib
 from train import denoise_trajectories
 
 class SINDy:
+    # Create/train the SINDy model
     def __init__(self, data_file_path, gpsindy=False, default_sigma_f=1, default_sigma_l=1, default_sigma_n=1, optimize_hyperparams=True):
         data_file = open(data_file_path, 'rb')
         mSampleLog = pickle.load(data_file)
@@ -41,7 +42,7 @@ class SINDy:
         
         self.model = model
 
-
+    # Use the trained SINDy model to make predictions
     def predict(self, trajectory, traj_len):
         t = np.arange(traj_len)
         return self.model.simulate(trajectory, t)

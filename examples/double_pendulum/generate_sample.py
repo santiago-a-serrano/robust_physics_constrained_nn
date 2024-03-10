@@ -2,7 +2,6 @@ import yaml
 from collections import namedtuple
 import pickle
 
-# Import JAX
 import jax
 import jax.numpy as jnp
 from jax import grad, vmap, jit, random

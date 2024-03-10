@@ -28,9 +28,12 @@ def print_trajectories(testTraj, n_state, actual_dt, num_traj):
         plt.legend()
         plt.show()
 
+# Plot the average accumulated error (and its confidence interval) for the trajectories passed
 def plot_avg_accum_error(time_index, ground_truths, aprch1_noreg, aprch1_withreg, aprch2_noreg, aprch2_withreg, noise_sd):
     plt.figure()
     plt.title(f"Accumulated Error | Noise σ={noise_sd}")
+
+    # Calculate the accumulated error for all models and all trajectories
     aprch1_noreg_squared_error = np.zeros((len(ground_truths), len(ground_truths[0])))
     aprch1_withreg_squared_error = np.zeros((len(ground_truths), len(ground_truths[0])))
     aprch2_noreg_squared_error = np.zeros((len(ground_truths), len(ground_truths[0])))
@@ -46,6 +49,7 @@ def plot_avg_accum_error(time_index, ground_truths, aprch1_noreg, aprch1_withreg
             aprch2_noreg_squared_error[traj_idx][t] = aprch2_noreg_squared_error[traj_idx][t-1] + np.linalg.norm(ground_truths[traj_idx][t] - aprch2_noreg[traj_idx][t])
             aprch2_withreg_squared_error[traj_idx][t] = aprch2_withreg_squared_error[traj_idx][t-1] + np.linalg.norm(ground_truths[traj_idx][t] - aprch2_withreg[traj_idx][t])
 
+    # Get the mean (and standard error) of the squared errors (mean of all trajectories)
     mean_aprch1_noreg = np.mean(aprch1_noreg_squared_error, axis=0)
     mean_aprch1_withreg = np.mean(aprch1_withreg_squared_error, axis=0)
     sem_aprch1_noreg = stats.sem(aprch1_noreg_squared_error, axis=0)
@@ -55,6 +59,7 @@ def plot_avg_accum_error(time_index, ground_truths, aprch1_noreg, aprch1_withreg
     sem_aprch2_noreg = stats.sem(aprch2_noreg_squared_error, axis=0)
     sem_aprch2_withreg = stats.sem(aprch2_withreg_squared_error, axis=0)
 
+    # Perform calculations needed for plotting the confidence intervals
     confidence_level = 0.95
     degrees_freedom = len(ground_truths) - 1
     t_critical = stats.t.ppf((1 + confidence_level) / 2, degrees_freedom)
@@ -63,6 +68,7 @@ def plot_avg_accum_error(time_index, ground_truths, aprch1_noreg, aprch1_withreg
     margin_of_error_aprch2_noreg = t_critical * sem_aprch2_noreg
     margin_of_error_aprch2_withreg = t_critical * sem_aprch2_withreg
 
+    # Plot the mean accumulated errors with their corresponding confidence intervals
     plt.plot(time_index, mean_aprch1_noreg, color='red', label='A1: No GR')
     plt.plot(time_index, mean_aprch1_withreg, color='orange', label='A1: With GR')
     plt.fill_between(time_index, mean_aprch1_noreg - margin_of_error_aprch1_noreg, mean_aprch1_noreg + margin_of_error_aprch1_noreg, 
@@ -82,6 +88,7 @@ def plot_avg_accum_error(time_index, ground_truths, aprch1_noreg, aprch1_withreg
     plt.legend()
     plt.show()
 
+# Use the trained model passed as argument to make predictions
 def gen_trajectory_evolution(trained_model_file, testTraj, num_traj):
     with open(trained_model_file, 'rb') as f:
         model = pickle.load(f)

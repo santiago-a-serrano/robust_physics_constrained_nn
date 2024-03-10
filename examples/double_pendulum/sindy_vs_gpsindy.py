@@ -29,7 +29,7 @@ def print_trajectories(testTraj, n_state, actual_dt, num_traj):
         plt.legend()
         plt.show()
 
-
+# Plot the average accumulated error (and its confidence interval) for the trajectories passed
 def plot_avg_accum_error(time_index, ground_truths, sindy_trajectories, gpsindy_trajectories, noise_sd):
     if len(ground_truths) != len(sindy_trajectories) or len(ground_truths) != len(gpsindy_trajectories):
         raise ValueError(
@@ -41,6 +41,8 @@ def plot_avg_accum_error(time_index, ground_truths, sindy_trajectories, gpsindy_
 
     plt.figure()
     plt.title(f"Accumulated Error | Noise σ={noise_sd}")
+
+    # Calculate the accumulated error for all models and all trajectories
     sindy_squared_error = np.zeros((len(ground_truths), len(ground_truths[0])))
     gpsindy_squared_error = np.zeros(
         (len(ground_truths), len(ground_truths[0])))
@@ -56,17 +58,21 @@ def plot_avg_accum_error(time_index, ground_truths, sindy_trajectories, gpsindy_
             gpsindy_squared_error[traj_idx][t] = gpsindy_squared_error[traj_idx][t-1] + \
                 np.linalg.norm(
                     ground_truths[traj_idx][t] - gpsindy_trajectories[traj_idx][t])
+            
+    # Get the mean (and standard error) of the squared errors (mean of all trajectories)
     mean_sindy = np.mean(sindy_squared_error, axis=0)
     mean_gpsindy = np.mean(gpsindy_squared_error, axis=0)
     sem_sindy = stats.sem(sindy_squared_error, axis=0)
     sem_gpsindy = stats.sem(gpsindy_squared_error, axis=0)
 
+    # Perform calculations needed for plotting the confidence intervals
     confidence_level = 0.95
     degrees_freedom = len(ground_truths) - 1
     t_critical = stats.t.ppf((1 + confidence_level) / 2, degrees_freedom)
     margin_of_error_sindy = t_critical * sem_sindy
     margin_of_error_gpsindy = t_critical * sem_gpsindy
 
+    # Plot the mean accumulated errors with their corresponding confidence intervals
     plt.plot(time_index, mean_sindy, color='red', label='SINDy')
     plt.plot(time_index, mean_gpsindy, color='orange', label='GPSINDy')
     plt.fill_between(time_index, mean_sindy - margin_of_error_sindy, mean_sindy + margin_of_error_sindy,

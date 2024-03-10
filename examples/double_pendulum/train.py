@@ -218,6 +218,7 @@ def load_config_file(path_config_file, extra_args={}):
 
     return weight_noise, bias_noise, constraint_noise, perform_gp_denoising, optimize_hyperparams, big_denoising, default_sigma_n, grad_reg, mSampleLog, mParamsNN_list, (type_baseline, data_set_file, out_file)
 
+# "Remove" Gaussian noise, through Gaussian Process Regression, to trajectories
 def denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, n_rollout, optimize_hyperparams, big_denoising, default_sigma_f=1, default_sigma_l=1, default_sigma_n=1):
     trajectories = []
     for i in range(0, len(xTrainList), trajectory_length):
@@ -250,7 +251,7 @@ def denoise_trajectories(xTrainList, xnextTrainList, trajectory_length, n_rollou
 
     return xTrainList, xnextTrainList
 
-
+# "Remove" Gaussian noise, through Gaussian Process Regression, to a single trajectory
 def gp_denoise_trajectory(trajectory, sigma_f, sigma_l, sigma_n, big_denoising):
     # noise must be specified if optimize_hyperparam is set to false
     return gpr.get_denoised_traj(trajectory, sigma_f, sigma_l, sigma_n, big_denoising)

@@ -13,23 +13,30 @@ from train import build_learner
 from scipy import stats
 
 # TODO: Use this code also in the other files, to avoid repeating the plot_avg_accum_error function
+# Plot the average accumulated error (and its confidence interval) for the trajectories passed
 def plot_avg_accum_error(time_index, ground_truths, trajectories_dict, colors_dict, noise_sd):
     plt.figure()
     plt.title(f"Accumulated Error | Noise σ={noise_sd}")
+
+    # Calculate the accumulated error for all models and all trajectories
     for model_name, trajectories in trajectories_dict.items():
         squared_error = np.zeros((len(ground_truths), len(ground_truths[0])))
         for traj_idx in range(len(ground_truths)):
             squared_error[traj_idx][0] = np.linalg.norm(ground_truths[traj_idx][0] - trajectories[traj_idx][0])
             for t in range(1, len(ground_truths[0])):
                 squared_error[traj_idx][t] = squared_error[traj_idx][t-1] + np.linalg.norm(ground_truths[traj_idx][t] - trajectories[traj_idx][t])
+
+        # Get the mean (and standard error) of the squared errors (mean of all trajectories)
         mean = np.mean(squared_error, axis=0)
         sem = stats.sem(squared_error, axis=0)
 
+        # Perform calculations needed for plotting the confidence intervals
         confidence_level = 0.95
         degrees_freedom = len(ground_truths) - 1
         t_critical = stats.t.ppf((1 + confidence_level) / 2, degrees_freedom)
         margin_of_error = t_critical * sem
 
+        # Plot the mean accumulated errors with their corresponding confidence intervals
         plt.plot(time_index, mean, color=colors_dict[model_name], label=model_name)
         plt.fill_between(time_index, mean - margin_of_error, mean + margin_of_error, color=colors_dict[model_name], alpha=0.2)
 

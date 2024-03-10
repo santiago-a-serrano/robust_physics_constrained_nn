@@ -6,13 +6,15 @@ import torch.nn as nn
 import torch
 from torch import optim
 
+# internal function part of Gaussian Process Regression
 def squared_exponential_kernel(argument_1, argument_2, sigma_f, sigma_l):
     return (sigma_f * torch.exp(-(torch.norm(argument_1 - argument_2)**2) / (2 * sigma_l**2)))
 
-# X1 and X2 are sets of points
+# X1 and X2 are sets of points. Internal matrix part of Gaussian Process Regression
 def cov_matrix(X1, X2, covariance_function, sigma_f, sigma_l):
     return torch.stack([torch.stack([covariance_function(x1, x2, sigma_f, sigma_l) for x1 in X1]) for x2 in X2])
     
+# Call this function to get the optimal hyperparameters that fit the given trajectory
 def find_optim_hyperparams(trajectory, big_denoising=False):
     t = torch.arange(0, len(trajectory), dtype=torch.float)
     trajectory = torch.from_numpy(trajectory).T
@@ -47,7 +49,7 @@ def find_optim_hyperparams(trajectory, big_denoising=False):
 
     return best_f, best_l, best_n
 
-    
+# The PyTorch model that optimizes the hyperparameters of the Gaussian Process Regression    
 class LogMarginalLikelihood(nn.Module):
     def __init__(self, trajectory, t, big_denoising=False):
         super().__init__()
@@ -73,7 +75,7 @@ class LogMarginalLikelihood(nn.Module):
         
         return lml
 
-
+# Call this function to denoise the trajectory using Gaussian Process Regression
 def get_denoised_traj(trajectory, sigma_f, sigma_l, sigma_n, big_denoising=False):
     t = torch.arange(0, len(trajectory), dtype=torch.float)
     trajectory = torch.from_numpy(trajectory).T

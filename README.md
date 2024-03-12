@@ -4,7 +4,7 @@ This module builds on top of [Djemou _et al_'s](https://github.com/wuwushrek/phy
 
 ## Installation
 
-The code is written both in Python.
+The code is written in Python.
 
 This package requires [`jax`](https://github.com/google/jax) to be installed. The package further requires [`dm-haiku`](https://github.com/deepmind/dm-haiku) for neural networks in jax and [`optax`](https://github.com/deepmind/optax) a gradient processing and optimization library for JAX.
 
